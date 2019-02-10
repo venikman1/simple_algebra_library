@@ -1,23 +1,21 @@
 #pragma once
 #include <map>
-#include <iostream>
 
 namespace SALIB {
 
-    class Monomial
-    {
-        using VarContainer = std::map<long long, long long>;
-        using iterator = VarContainer::iterator;
-        using const_iterator = VarContainer::const_iterator;
-        using reverse_iterator = VarContainer::reverse_iterator;
-        using const_reverse_iterator = VarContainer::const_reverse_iterator;
-
-    private:
-        VarContainer variables;
-        
+    class Monomial {
     public:
+        using VariableIndexType = long long;
+        using VariableDegreeType = unsigned long long;
+        using VariablesContainer = std::map<VariableIndexType, VariableDegreeType>;
+        using iterator = VariablesContainer::iterator;
+        using const_iterator = VariablesContainer::const_iterator;
+        using reverse_iterator = VariablesContainer::reverse_iterator;
+        using const_reverse_iterator = VariablesContainer::const_reverse_iterator;
+    
         Monomial() = default;
 
+        /* TODO: make named constructors */
         Monomial(const std::initializer_list<long long>& init_list) {
             long long key = 0;
             for (long long value : init_list) {
@@ -26,7 +24,7 @@ namespace SALIB {
         }
 
         Monomial& operator*=(const Monomial& other) {
-            for (auto& it : other.variables) {
+            for (const auto& it : other.variables) {
                 variables[it.first] += it.second;
             }
             return *this;
@@ -37,14 +35,14 @@ namespace SALIB {
             return res *= other;
         }
 
-        long long& operator[](long long key) {
-            return variables[key];
+        VariableDegreeType& operator[](VariableIndexType var_index) {
+            return variables[var_index];
         }
 
-        long long operator[](long long key) const {
-            auto found = variables.find(key);
+        VariableDegreeType operator[](VariableIndexType var_index) const {
+            auto found = variables.find(var_index);
             if (found == variables.end())
-                return 0;
+                return VariableDegreeType(0);
             return found->second;
         }
 
@@ -62,31 +60,11 @@ namespace SALIB {
             variables.clear();
         }
 
-        bool operator==(const Monomial& other) const {
-            auto it1 = variables.begin();
-            auto it2 = other.variables.begin();
-            while (it1 != variables.end() || it2 != other.variables.end()) {
-                while (it1->second == 0 && it1 != variables.end())
-                    ++it1;
-                while (it2->second == 0 && it2 != other.variables.end())
-                    ++it2;
-                if (it2 == other.variables.end() && it1 == variables.end())
-                    return true;
-                if (it2 == other.variables.end() || it1 == variables.end())
-                    return false;
-                if (it1->first != it2->first)
-                    return false;
-                if (it1->second != it2->second)
-                    return false;
-                ++it1;
-                ++it2;
-            }
-            return true;
-        }
+        bool operator==(const Monomial& other) const;
 
-        bool operator!=(const Monomial& other) const {
-            return !(*this == other);
-        }
+        bool operator<(const Monomial& other) const;
+
+        bool operator!=(const Monomial& other) const;
 
         iterator begin() {
             return variables.begin();
@@ -119,5 +97,8 @@ namespace SALIB {
         const_reverse_iterator rend() const {
             return variables.rend();
         }
+
+    private:
+        VariablesContainer variables;
     };
 }

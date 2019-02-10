@@ -6,18 +6,15 @@
 namespace SALIB {
     
     
-    template <typename Ct, typename Order = MonoLexOrder>
-    class Polynomial
-    {
-        using MonomialMap = std::map<Monomial, Ct, Order>;
+    template <typename CoefficientType, typename Order = MonoLexOrder>
+    class Polynomial {
+    public:
+        using MonomialMap = std::map<Monomial, CoefficientType, Order>;
         using iterator = typename MonomialMap::iterator;
         using const_iterator = typename MonomialMap::const_iterator;
         using reverse_iterator = typename MonomialMap::reverse_iterator;
         using const_reverse_iterator = typename MonomialMap::const_reverse_iterator;
-    private:
-        MonomialMap monomials;
-    
-    public:
+
         Polynomial& operator+=(const Polynomial& other) {
             for (auto& it : other.monomials) {
                 monomials[it.first] += it.second;
@@ -75,5 +72,8 @@ namespace SALIB {
         const_reverse_iterator rend() const {
             return monomials.rend();
         }
+    
+    private:
+        MonomialMap monomials;
     };
 }
