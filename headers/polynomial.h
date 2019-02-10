@@ -23,6 +23,15 @@ namespace SALIB {
             monomials[Monomial()] = coeff;
         }
 
+        static Polynomial s_polynomial(const Polynomial& a, const Polynomial& b) {
+            Monomial a_lt = a.get_largest_monomial();
+            Monomial b_lt = b.get_largest_monomial();
+            Monomial l = Monomial::lcm(a_lt, b_lt);
+            Polynomial res = a * Polynomial(l / a_lt, CoefficientType(1) / a[a_lt]);
+            res -= b * Polynomial(l / b_lt, CoefficientType(1) / b[b_lt]);
+            return res;
+        }
+
         template <typename CoefficientTypeOther, typename OrderOther> 
         Polynomial(const Polynomial<CoefficientTypeOther, OrderOther>& other) {
             for (const auto& it : other) {
@@ -112,13 +121,25 @@ namespace SALIB {
             return res;
         }
 
+        Polynomial operator+() const {
+            Polynomial res(*this);
+            return res;
+        }
+
         Monomial get_largest_monomial() const {
-            if (monomials.size()) {
-                auto it = monomials.end();
-                --it;
-                return it->first;
+            for (auto it = monomials.rbegin(); it != monomials.rend(); ++it) {
+                if (it->second != CoefficientType(0))
+                    return it->first;
             }
             return Monomial();
+        }
+
+        Polynomial get_largest_monomial_as_poly() const {
+            for (auto it = monomials.rbegin(); it != monomials.rend(); ++it) {
+                if (it->second != CoefficientType(0))
+                    return Polynomial(it->first, it->second);
+            }
+            return Polynomial();
         }
 
         iterator begin() {
@@ -172,6 +193,15 @@ namespace SALIB {
         const Polynomial<CoefficientType, Order>& poly
         ) {
         return poly * Polynomial<CoefficientType, Order>(coeff);
+    }
+
+    template <typename CoefficientType, typename Order>
+    Polynomial<CoefficientType, Order>
+    operator+(
+        const CoefficientType& coeff,
+        const Polynomial<CoefficientType, Order>& poly
+        ) {
+        return poly + Polynomial<CoefficientType, Order>(coeff);
     }
 
     // template <typename CoefficientType>

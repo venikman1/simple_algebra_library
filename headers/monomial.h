@@ -1,12 +1,13 @@
 #pragma once
 #include <map>
+#include <algorithm>
 
 namespace SALIB {
 
     class Monomial {
     public:
-        using VariableIndexType = long long;
-        using VariableDegreeType = unsigned long long;
+        using VariableIndexType = unsigned long long;
+        using VariableDegreeType = long long;
         using VariablesContainer = std::map<VariableIndexType, VariableDegreeType>;
         using iterator = VariablesContainer::iterator;
         using const_iterator = VariablesContainer::const_iterator;
@@ -15,12 +16,19 @@ namespace SALIB {
     
         Monomial() = default;
 
-        /* TODO: make named constructors */
         Monomial(const std::initializer_list<long long>& init_list) {
             long long key = 0;
             for (long long value : init_list) {
                 variables[key++] = value;
             }
+        }
+
+        static Monomial lcm(const Monomial& a, const Monomial& b) {
+            Monomial res = a;
+            for (const auto& it : b) {
+                res[it.first] = std::max(res[it.first], it.second);
+            }
+            return res;
         }
 
         Monomial& operator*=(const Monomial& other) {
@@ -33,6 +41,26 @@ namespace SALIB {
         Monomial operator*(const Monomial& other) const {
             Monomial res(*this);
             return res *= other;
+        }
+
+        Monomial& operator/=(const Monomial& other) {
+            for (const auto& it : other.variables) {
+                variables[it.first] -= it.second;
+            }
+            return *this;
+        }
+
+        Monomial operator/(const Monomial& other) const {
+            Monomial res(*this);
+            return res /= other;
+        }
+
+        bool is_dividable_by(const Monomial& other) const {
+            for (const auto& it : other) {
+                if ((*this)[it.first] < it.second)
+                    return false;
+            }
+            return true;
         }
 
         VariableDegreeType& operator[](VariableIndexType var_index) {
