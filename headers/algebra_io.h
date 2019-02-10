@@ -1,0 +1,41 @@
+#pragma once
+#include "polynomial.h"
+#include <iostream>
+#include <string>
+
+namespace SALIB {
+    class Reader {
+        /*
+            Maybe someday
+        */
+    public:
+
+        template <typename CoefficientType, typename Order>
+        static Polynomial<CoefficientType, Order> 
+        convert_string_to_poly(const std::string& s);
+    private:
+    };
+
+    template <typename CoefficientType, typename Order>
+    std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly) {
+        bool first_time = true;
+        for (auto it = poly.rbegin(); it != poly.rend(); ++it) {
+            if (first_time)
+                first_time = false;
+            else
+                out << " + ";
+            out << it->second;
+            for (const auto& var : it->first) {
+                if (var.second) {
+                    out << " * ";
+                    if (var.first < 3 && var.first >= 0)
+                        out << (char)('x' + var.first);
+                    else
+                        out << "x_" << var.first;
+                    out << "^" << var.second;
+                }
+            }
+        }
+        return out;
+    }
+}
