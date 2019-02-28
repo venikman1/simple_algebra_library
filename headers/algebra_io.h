@@ -4,18 +4,6 @@
 #include <string>
 
 namespace SALIB {
-    class Reader {
-        /*
-            Maybe someday
-        */
-    public:
-
-        template <typename CoefficientType, typename Order>
-        static Polynomial<CoefficientType, Order> 
-        convert_string_to_poly(const std::string& s);
-    private:
-    };
-
     template <typename CoefficientType, typename Order>
     std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly) {
         if (poly == Polynomial<CoefficientType, Order>()) {

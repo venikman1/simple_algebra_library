@@ -1,48 +1,44 @@
 #pragma once
 #include "monomial.h"
+#include <functional>
+#include <utility>
 
 namespace SALIB {
-    
-    class Order {
-        int a;
-        /* ... */
-    };
-
     class MonoLexOrder {
     public:
-        inline static int mono_lex_cmp(const Monomial& a, const Monomial& b);
+        static int cmp(const Monomial& a, const Monomial& b);
 
-        bool operator()(const Monomial& a, const Monomial& b) const {
-            return mono_lex_cmp(a, b) < 0;
-        }
+        bool operator()(const Monomial& a, const Monomial& b) const;
     };
 
-    
-    int MonoLexOrder::mono_lex_cmp(const Monomial& a, const Monomial& b) {
-        auto it1 = a.begin();
-        auto it2 = b.begin();
-        while (it1 != a.end() || it2 != b.end()) {
-            while (it1->second == 0 && it1 != a.end())
-                ++it1;
-            while (it2->second == 0 && it2 != b.end())
-                ++it2;
-            if (it2 == b.end() && it1 == a.end())
-                return 0;
-            if (it1 == a.end())
-                return -1;
-            if (it2 == b.end())
-                return 1;
-            if (it1->first < it2->first)
-                return 1;
-            if (it1->first > it2->first)
-                return -1;
-            if (it1->second < it2->second)
-                return -1;
-            if (it1->second > it2->second)
-                return 1;
-            ++it1;
-            ++it2;
+    class CustomOrder {
+    public:
+        CustomOrder() {
+            compare = [](const Monomial& a, const Monomial& b) -> int {return 0;};
         }
-        return 0;
-    }
+
+        template<typename FirstCmp, typename ... Cmps>
+        CustomOrder(const FirstCmp& fcmp, const Cmps& ... cmps)
+            : CustomOrder(cmps...)
+        {
+            std::function<int (const Monomial&, const Monomial&)>& old_compare = compare;
+            compare = [old_compare, fcmp](const Monomial& a, const Monomial& b) -> int {
+                int res = fcmp(a, b);
+                if (res == 0)
+                    return old_compare(a, b);
+                return res;
+            };
+        }
+
+        bool operator()(const Monomial& a, const Monomial& b) const {
+            return compare(a, b) < 0;
+        }
+
+        int cmp(const Monomial& a, const Monomial& b) const {
+            return compare(a, b);
+        }
+
+    private:
+        std::function<int (const Monomial&, const Monomial&)> compare;
+    };
 }

@@ -1,47 +1,43 @@
 #pragma once
 #include <vector>
+#include <unordered_set>
 #include "polynomial.h"
-#include <iostream>
+#include <utility>
 
 namespace SALIB {
+    template <typename CoefficientType, typename Order = MonoLexOrder>
+    class PolynomialHash {
+    public:
+        size_t operator()(const Polynomial<CoefficientType, Order>& poly) const {
+            /*
+                This hash might be better
+            */
+            size_t res = 0;
+            for (const auto& mono_coef : poly) {
+                size_t part = 0;
+                for (const auto& num_pow : mono_coef.first) {
+                    part += (num_pow.first + 1) * num_pow.second; 
+                }
+                res += part;
+                if (part)
+                    res *= base;
+            }
+            return res;
+        }
+    private:
+        const static size_t base = 257;
+    };
 
     template <typename CoefficientType, typename Order = MonoLexOrder>
     class PolynomialSet {
     public:
         using PolynomialType = Polynomial<CoefficientType, Order>;
-        using PolynomialContainer = std::vector<PolynomialType>;
+        using HashType = PolynomialHash<CoefficientType, Order>;
+        using PolynomialContainer = std::unordered_set<PolynomialType, HashType>;
         using iterator = typename PolynomialContainer::iterator;
         using const_iterator = typename PolynomialContainer::const_iterator;
-        using reverse_iterator = typename PolynomialContainer::reverse_iterator;
-        using const_reverse_iterator = typename PolynomialContainer::const_reverse_iterator;
 
         PolynomialSet() = default;
-
-        PolynomialType reduce(const PolynomialType& poly, PolynomialSet& answer) const {
-            answer.polynomials.assign(size(), PolynomialType());
-            PolynomialType p = poly;
-            PolynomialType r;
-            while (p != PolynomialType()) {
-                bool divided = false;
-                for (size_t i = 0; i < size();) {
-                    Monomial p_lt = p.get_largest_monomial();
-                    Monomial fi_lt = polynomials[i].get_largest_monomial();
-                    if (p_lt.is_dividable_by(fi_lt)) {
-                        answer[i] += PolynomialType(p_lt / fi_lt, p[p_lt] / polynomials[i][fi_lt]);
-                        p -= PolynomialType(p_lt / fi_lt, p[p_lt] / polynomials[i][fi_lt]) * polynomials[i];
-                        divided = true;
-                    }
-                    else {
-                        ++i;
-                    }
-                }
-                if (!divided) {
-                    r += p.get_largest_monomial_as_poly();
-                    p -= p.get_largest_monomial_as_poly();
-                }
-            }
-            return r;
-        }
 
         PolynomialSet get_groebner_basis() const {
             PolynomialSet basis = *this;
@@ -69,19 +65,19 @@ namespace SALIB {
         }
 
         void add(const PolynomialType& poly) {
-            polynomials.push_back(poly);
+            PolynomialType cpy(poly);
+            cpy *= PolynomialType(1 / poly[poly.get_largest_monomial()]);
+            polynomials.insert(std::move(cpy));
+        }
+
+        void remove(const PolynomialType& poly) {
+            PolynomialType cpy(poly);
+            cpy *= PolynomialType(1 / poly[poly.get_largest_monomial()]);
+            polynomials.erase(poly);
         }
 
         void clear() {
             polynomials.clear();
-        }
-
-        PolynomialType& operator[](size_t id) {
-            return polynomials[id];
-        }
-
-        const PolynomialType& operator[](size_t id) const {
-            return polynomials[id];
         }
 
         size_t size() const {
@@ -102,22 +98,6 @@ namespace SALIB {
 
         const_iterator end() const {
             return polynomials.end();
-        }
-
-        reverse_iterator rbegin() {
-            return polynomials.rbegin();
-        }
-
-        reverse_iterator rend() {
-            return polynomials.rend();
-        }
-
-        const_reverse_iterator rbegin() const {
-            return polynomials.rbegin();
-        }
-
-        const_reverse_iterator rend() const {
-            return polynomials.rend();
         }
 
     private:

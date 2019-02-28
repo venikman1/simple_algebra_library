@@ -16,115 +16,34 @@ namespace SALIB {
     
         Monomial() = default;
 
-        Monomial(const std::initializer_list<long long>& init_list) {
-            long long key = 0;
-            for (long long value : init_list) {
-                variables[key++] = value;
-            }
-        }
+        Monomial(const std::initializer_list<long long>& init_list);
 
-        static Monomial lcm(const Monomial& a, const Monomial& b) {
-            Monomial res = a;
-            for (const auto& it : b) {
-                res[it.first] = std::max(res[it.first], it.second);
-            }
-            return res;
-        }
+        static Monomial lcm(const Monomial& a, const Monomial& b);
 
-        Monomial& operator*=(const Monomial& other) {
-            for (const auto& it : other.variables) {
-                variables[it.first] += it.second;
-            }
-            return *this;
-        }
+        Monomial& operator*=(const Monomial& other);
+        Monomial operator*(const Monomial& other) const;
+        Monomial& operator/=(const Monomial& other);
+        Monomial operator/(const Monomial& other) const;
 
-        Monomial operator*(const Monomial& other) const {
-            Monomial res(*this);
-            return res *= other;
-        }
+        bool is_dividable_by(const Monomial& other) const;
 
-        Monomial& operator/=(const Monomial& other) {
-            for (const auto& it : other.variables) {
-                variables[it.first] -= it.second;
-            }
-            return *this;
-        }
+        VariableDegreeType& operator[](VariableIndexType var_index);
+        VariableDegreeType operator[](VariableIndexType var_index) const;
 
-        Monomial operator/(const Monomial& other) const {
-            Monomial res(*this);
-            return res /= other;
-        }
-
-        bool is_dividable_by(const Monomial& other) const {
-            for (const auto& it : other) {
-                if ((*this)[it.first] < it.second)
-                    return false;
-            }
-            return true;
-        }
-
-        VariableDegreeType& operator[](VariableIndexType var_index) {
-            return variables[var_index];
-        }
-
-        VariableDegreeType operator[](VariableIndexType var_index) const {
-            auto found = variables.find(var_index);
-            if (found == variables.end())
-                return VariableDegreeType(0);
-            return found->second;
-        }
-
-        void clean_empty_variables() {
-            for (auto it = variables.begin(); it != variables.end();) {
-                auto next_it = it;
-                ++next_it;
-                if (it->second == 0)
-                    variables.erase(it);
-                it = next_it;
-            }
-        }
-
-        void clear() {
-            variables.clear();
-        }
+        void zero();
 
         bool operator==(const Monomial& other) const;
-
         bool operator<(const Monomial& other) const;
-
         bool operator!=(const Monomial& other) const;
 
-        iterator begin() {
-            return variables.begin();
-        }
-
-        iterator end() {
-            return variables.end();
-        }
-
-        const_iterator begin() const {
-            return variables.begin();
-        }
-
-        const_iterator end() const {
-            return variables.end();
-        }
-
-        reverse_iterator rbegin() {
-            return variables.rbegin();
-        }
-
-        reverse_iterator rend() {
-            return variables.rend();
-        }
-
-        const_reverse_iterator rbegin() const {
-            return variables.rbegin();
-        }
-
-        const_reverse_iterator rend() const {
-            return variables.rend();
-        }
+        iterator begin();
+        iterator end();
+        const_iterator begin() const;
+        const_iterator end() const;
+        reverse_iterator rbegin();
+        reverse_iterator rend();
+        const_reverse_iterator rbegin() const;
+        const_reverse_iterator rend() const;
 
     private:
         VariablesContainer variables;
