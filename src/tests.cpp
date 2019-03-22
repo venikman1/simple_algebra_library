@@ -24,7 +24,7 @@ void monomial_tests() {
     Monomial c;
     c = a * b;
     assert(c == a * b);
-    c.zero();
+    c.zero_all_powers();
     assert(c == Monomial());
     assert(c != a);
     assert(a * c == a);
@@ -39,8 +39,8 @@ void monomial_tests() {
 
     // Order tests
     MonoLexOrder order;
-    a.zero();
-    c.zero();
+    a.zero_all_powers();
+    c.zero_all_powers();
     a[1] = 2;
     c[1] = 2;
     assert(order(a, c) == false);
@@ -54,11 +54,18 @@ void monomial_tests() {
     assert(order(a, c) == true);
     a[2] = 0;
     assert(order(a, c) == true);
+    a.zero_all_powers();
+    c.zero_all_powers();
+    a[2] = 1;
+    a[5000] = 0;
+    c[2] = 1;
+    c[5001] = 0;
+    assert(order.cmp(a, c) == 0);
     cerr << "Mono order tests OK!\n";
 
     // Mono cmp tests
-    a.zero();
-    c.zero();
+    a.zero_all_powers();
+    c.zero_all_powers();
     c[1] = 0;
     c[2] = 0;
     assert(order.cmp(a, c) == 0);
@@ -166,7 +173,48 @@ void polynomial_tests() {
     cerr << "S polynomial tests OK!\n";
 }
 
+void hash_tests() {
+    // Monomials
+    Monomial a; 
+    a[0] = 2; a[1] = 4;
+    const Monomial b{0, 0, 3, 5, 1, 2};
+    std::hash<Monomial> mono_hash; 
+    assert(mono_hash(b) == mono_hash(b));
+    assert(mono_hash(a) != mono_hash(b));
+    Monomial a_copy = a;
+    a_copy[100] = 0;
+    assert(mono_hash(a) == mono_hash(a_copy));
+    cerr << "Monomial hash OK!\n";
+
+    // boost::rational
+    using Rat = boost::rational<long long>;
+    std::hash<Rat> rat_hash; 
+    Rat ra(2, 3);
+    Rat rb(4, 6);
+    assert(rat_hash(ra) == rat_hash(rb));
+    rb += Rat(1);
+    assert(rat_hash(ra) != rat_hash(rb));
+    rb -= Rat(1);
+    assert(rat_hash(ra) == rat_hash(rb));
+    cerr << "boost::rational hash OK!\n";
+
+    // polynomials
+    using PolyTest = Polynomial<boost::rational<long long>>;
+    std::hash<PolyTest> poly_hash; 
+    PolyTest x = Monomial{1};
+    PolyTest y = Monomial{0, 1};
+    PolyTest z = Monomial{0, 0, 1};
+    PolyTest p1 = x * x * x + z;
+    PolyTest p2 = p1 + y * z;
+    assert(poly_hash(p1) != poly_hash(p2));
+    p2 -= y * z;
+    assert(poly_hash(p1) == poly_hash(p2));
+    cerr << "Polynomial hash OK!\n";
+}
+
 void test_all() {
-    polynomial_tests();
+    
     monomial_tests();
+    polynomial_tests();
+    hash_tests();
 }

@@ -6,7 +6,7 @@
 namespace SALIB {
     template <typename CoefficientType, typename Order>
     std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly) {
-        if (poly == Polynomial<CoefficientType, Order>()) {
+        if (poly.is_zero()) {
             out << "0";
             return out;
         }
@@ -18,15 +18,17 @@ namespace SALIB {
                 else
                     out << " + ";
                 out << it->second;
+                int i = 0;
                 for (const auto& var : it->first) {
-                    if (var.second) {
+                    if (var) {
                         out << " * ";
-                        if (var.first < 3 && var.first >= 0)
-                            out << (char)('x' + var.first);
+                        if (i < 3)
+                            out << (char)('x' + i);
                         else
-                            out << "x_" << var.first;
-                        out << "^" << var.second;
+                            out << "x_" << i;
+                        out << "^" << var;
                     }
+                    ++i;
                 }
             }
         }

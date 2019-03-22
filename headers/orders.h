@@ -11,6 +11,13 @@ namespace SALIB {
         bool operator()(const Monomial& a, const Monomial& b) const;
     };
 
+    class GradientSemiOrder {
+    public:
+        static int cmp(const Monomial& a, const Monomial& b);
+
+        bool operator()(const Monomial& a, const Monomial& b) const;
+    };
+
     class CustomOrder {
     public:
         CustomOrder() {
@@ -41,4 +48,6 @@ namespace SALIB {
     private:
         std::function<int (const Monomial&, const Monomial&)> compare;
     };
+
+    using DefaultOrder = MonoLexOrder;
 }

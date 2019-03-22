@@ -1,22 +1,22 @@
 #pragma once
-#include <map>
+#include <vector>
 #include <algorithm>
 
 namespace SALIB {
-
     class Monomial {
     public:
-        using VariableIndexType = unsigned long long;
-        using VariableDegreeType = long long;
-        using VariablesContainer = std::map<VariableIndexType, VariableDegreeType>;
+        using VariableIndexType = size_t;
+        using VariableDegreeType = unsigned long long;
+        using VariablesContainer = std::vector<VariableDegreeType>;
         using iterator = VariablesContainer::iterator;
         using const_iterator = VariablesContainer::const_iterator;
         using reverse_iterator = VariablesContainer::reverse_iterator;
         using const_reverse_iterator = VariablesContainer::const_reverse_iterator;
-    
-        Monomial() = default;
 
-        Monomial(const std::initializer_list<long long>& init_list);
+
+        Monomial() = default;
+        Monomial(VariableIndexType var_index, VariableDegreeType var_degree);
+        Monomial(const std::initializer_list<VariableDegreeType>& init_list);
 
         static Monomial lcm(const Monomial& a, const Monomial& b);
 
@@ -30,11 +30,13 @@ namespace SALIB {
         VariableDegreeType& operator[](VariableIndexType var_index);
         VariableDegreeType operator[](VariableIndexType var_index) const;
 
-        void zero();
-
+        void zero_all_powers();
+        bool is_zero() const;
         bool operator==(const Monomial& other) const;
         bool operator<(const Monomial& other) const;
         bool operator!=(const Monomial& other) const;
+
+        bool is_depends_on_variable(VariableIndexType var_index) const;
 
         iterator begin();
         iterator end();

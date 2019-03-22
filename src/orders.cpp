@@ -2,34 +2,50 @@
 
 namespace SALIB {
     int MonoLexOrder::cmp(const Monomial& a, const Monomial& b) {
-        auto it1 = a.begin();
-        auto it2 = b.begin();
-        while (it1 != a.end() || it2 != b.end()) {
-            while (it1->second == 0 && it1 != a.end())
-                ++it1;
-            while (it2->second == 0 && it2 != b.end())
-                ++it2;
-            if (it2 == b.end() && it1 == a.end())
-                return 0;
-            if (it1 == a.end())
+        auto a_it = a.begin();
+        auto b_it = b.begin();
+        while (a_it != a.end() && b_it != b.end()) {
+            if (*a_it < *b_it)
                 return -1;
-            if (it2 == b.end())
+            if (*a_it > *b_it)
                 return 1;
-            if (it1->first < it2->first)
-                return 1;
-            if (it1->first > it2->first)
-                return -1;
-            if (it1->second < it2->second)
-                return -1;
-            if (it1->second > it2->second)
-                return 1;
-            ++it1;
-            ++it2;
+            ++a_it;
+            ++b_it;
         }
-        return 0;
+        if (a_it == a.end()) {
+            while (b_it != b.end()) {
+                if (*b_it)
+                    return -1;
+                ++b_it;
+            }
+            return 0;
+        }
+        if (b_it == b.end()) {
+            while (a_it != a.end()) {
+                if (*a_it)
+                    return 1;
+                ++a_it;
+            }
+            return 0;
+        }
     }
 
     bool MonoLexOrder::operator()(const Monomial& a, const Monomial& b) const {
+        return cmp(a, b) < 0;
+    }
+
+    int GradientSemiOrder::cmp(const Monomial& a, const Monomial& b) {
+        long long res_a = 0, res_b = 0;
+        for (const auto& pw : a) {
+            res_a += pw;
+        }
+        for (const auto& pw : b) {
+            res_b += pw;
+        }
+        return res_a - res_b;
+    }
+
+    bool GradientSemiOrder::operator()(const Monomial& a, const Monomial& b) const {
         return cmp(a, b) < 0;
     }
 };
