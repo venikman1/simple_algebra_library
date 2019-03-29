@@ -66,6 +66,10 @@ namespace SALIB {
         MonomialMap monomials;
     };
 
+/*
+=================================IMPLEMENTATION================================= 
+*/
+
     template <typename CoefficientType, typename Order>
     const CoefficientType Polynomial<CoefficientType, Order>::null_coef = CoefficientType(0);
     

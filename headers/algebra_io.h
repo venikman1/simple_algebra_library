@@ -5,6 +5,15 @@
 
 namespace SALIB {
     template <typename CoefficientType, typename Order>
+    std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly);
+
+
+
+/*
+=================================IMPLEMENTATION================================= 
+*/
+
+    template <typename CoefficientType, typename Order>
     std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly) {
         if (poly.is_zero()) {
             out << "0";

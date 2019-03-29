@@ -212,9 +212,27 @@ void hash_tests() {
     cerr << "Polynomial hash OK!\n";
 }
 
+
+
+void polyset_tests() {
+    using PolySet = PolynomialSet<boost::rational<long long>>;
+    using Poly = Polynomial<boost::rational<long long>>;
+    //using PolySet = PolySetClass<Poly>;
+    PolySet m;
+    Poly x = Monomial(0);
+    Poly y = Monomial(1);
+    Poly z = Monomial(4);
+    m.add(x*x + z + x * x + z);
+    assert(m.size() == 1);
+    m.remove(x*x + z);
+    assert(m.size() == 0);
+    cerr << "PolynomialSet OK!\n";
+}
+
 void test_all() {
     
     monomial_tests();
     polynomial_tests();
     hash_tests();
+    polyset_tests();
 }

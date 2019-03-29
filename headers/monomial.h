@@ -15,7 +15,7 @@ namespace SALIB {
 
 
         Monomial() = default;
-        Monomial(VariableIndexType var_index, VariableDegreeType var_degree);
+        Monomial(VariableIndexType var_index, VariableDegreeType var_degree = 1);
         Monomial(const std::initializer_list<VariableDegreeType>& init_list);
 
         static Monomial lcm(const Monomial& a, const Monomial& b);

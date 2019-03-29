@@ -28,6 +28,7 @@ namespace SALIB {
             }
             return 0;
         }
+        return 0;
     }
 
     bool MonoLexOrder::operator()(const Monomial& a, const Monomial& b) const {
@@ -47,5 +48,18 @@ namespace SALIB {
 
     bool GradientSemiOrder::operator()(const Monomial& a, const Monomial& b) const {
         return cmp(a, b) < 0;
+    }
+
+
+    CustomOrder::CustomOrder() {
+        compare = [](const Monomial& a, const Monomial& b) -> int {return 0;};
+    }
+
+    bool CustomOrder::operator()(const Monomial& a, const Monomial& b) const {
+        return compare(a, b) < 0;
+    }
+
+    int CustomOrder::cmp(const Monomial& a, const Monomial& b) const {
+        return compare(a, b);
     }
 };
