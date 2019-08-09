@@ -80,8 +80,8 @@ namespace SALIB {
     }
 
     Monomial::VariableDegreeType& Monomial::operator[](VariableIndexType var_index) {
-        if (var_index >= variables.size())
-            variables.resize(var_index + 1);
+        while (variables.size() <= var_index)
+            variables.push_back(0);
         return variables[var_index];
     }
 

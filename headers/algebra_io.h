@@ -13,6 +13,11 @@ namespace SALIB {
 =================================IMPLEMENTATION================================= 
 */
 
+//    template <typename CoefficientType>
+//    void print_monomial(std::ostream& out, const Monomial& mono, const CoefficientType* coeff) {
+//        out <<
+//    }
+
     template <typename CoefficientType, typename Order>
     std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly) {
         if (poly.is_zero()) {

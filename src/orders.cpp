@@ -1,6 +1,8 @@
 #include "orders.h"
 
+
 namespace SALIB {
+
     int MonoLexOrder::cmp(const Monomial& a, const Monomial& b) {
         auto a_it = a.begin();
         auto b_it = b.begin();
@@ -35,7 +37,7 @@ namespace SALIB {
         return cmp(a, b) < 0;
     }
 
-    int GradientSemiOrder::cmp(const Monomial& a, const Monomial& b) {
+    int MonoGradientSemiOrder::cmp(const Monomial& a, const Monomial& b) {
         long long res_a = 0, res_b = 0;
         for (const auto& pw : a) {
             res_a += pw;
@@ -46,20 +48,8 @@ namespace SALIB {
         return res_a - res_b;
     }
 
-    bool GradientSemiOrder::operator()(const Monomial& a, const Monomial& b) const {
+    bool MonoGradientSemiOrder::operator()(const Monomial& a, const Monomial& b) const {
         return cmp(a, b) < 0;
     }
 
-
-    CustomOrder::CustomOrder() {
-        compare = [](const Monomial& a, const Monomial& b) -> int {return 0;};
-    }
-
-    bool CustomOrder::operator()(const Monomial& a, const Monomial& b) const {
-        return compare(a, b) < 0;
-    }
-
-    int CustomOrder::cmp(const Monomial& a, const Monomial& b) const {
-        return compare(a, b);
-    }
-};
+}
