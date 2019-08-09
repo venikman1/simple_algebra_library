@@ -20,39 +20,34 @@ namespace SALIB {
         template <typename PolyOrder, typename SetOrder>
         static PolynomialType reduce_by(
             const Polynomial<CoefficientType, PolyOrder>& divider,
-            const PolynomialSet<CoefficientType, SetOrder>& divisors,
-            const Order& new_order = Order()
+            const PolynomialSet<CoefficientType, SetOrder>& divisors
         );
 
         static void make_groebner_basis(std::vector<PolynomialType>& ideal);
 
         template <typename SetOrder>
         static PolySet make_groebner_basis(
-            const PolynomialSet<CoefficientType, SetOrder>& ideal,
-            const Order& new_order = Order()
+            const PolynomialSet<CoefficientType, SetOrder>& ideal
         );
 
         template <typename PolyOrder, typename SetOrder>
         static bool is_polynomial_in_ideal(
             const Polynomial<CoefficientType, PolyOrder>& poly,
-            const PolynomialSet<CoefficientType, SetOrder>& ideal,
-            const Order& new_order = Order()
+            const PolynomialSet<CoefficientType, SetOrder>& ideal
         );
 
         template <typename PolyOrder, typename SetOrder>
         static bool is_polynomial_in_radical(
             const Polynomial<CoefficientType, PolyOrder>& poly,
             const PolynomialSet<CoefficientType, SetOrder>& ideal,
-            Monomial::VariableIndexType free_variable,
-            const Order& new_order = Order()
+            Monomial::VariableIndexType free_variable
         );
 
         template <typename SetOrder>
         static PolySet intersect_ideals(
             const PolynomialSet<CoefficientType, SetOrder>& ideal1,
             const PolynomialSet<CoefficientType, SetOrder>& ideal2,
-            Monomial::VariableIndexType free_variable,
-            const Order& new_order = Order()
+            Monomial::VariableIndexType free_variable
         );
     };
 
@@ -69,7 +64,7 @@ namespace SALIB {
     ) {
         if (incomplete_quotients) incomplete_quotients->resize(divisors.size());
         PolynomialType p = divider;
-        PolynomialType r(p.get_order());
+        PolynomialType r;
         while (!p.is_zero()) {
             bool divided = false;
             for (size_t i = 0; i < divisors.size();) {
@@ -77,8 +72,8 @@ namespace SALIB {
                 Monomial fi_lt = divisors[i].get_largest_monomial();
                 if (p_lt.is_dividable_by(fi_lt)) {
                     if (incomplete_quotients) 
-                        (*incomplete_quotients)[i] += PolynomialType(p_lt / fi_lt, p[p_lt] / divisors[i][fi_lt], p.get_order());
-                    p -= PolynomialType(p_lt / fi_lt, p[p_lt] / divisors[i][fi_lt], p.get_order()) * divisors[i];
+                        (*incomplete_quotients)[i] += PolynomialType(p[p_lt] / divisors[i][fi_lt], p_lt / fi_lt);
+                    p -= PolynomialType(p[p_lt] / divisors[i][fi_lt], p_lt / fi_lt) * divisors[i];
                     divided = true;
                     if (p.is_zero())
                         break;
@@ -100,14 +95,13 @@ namespace SALIB {
     typename PolyAlg<CoefficientType, Order>::PolynomialType 
     PolyAlg<CoefficientType, Order>::reduce_by(
         const Polynomial<CoefficientType, PolyOrder>& divider,
-        const PolynomialSet<CoefficientType, SetOrder>& divisors,
-        const Order& new_order
+        const PolynomialSet<CoefficientType, SetOrder>& divisors
     ) {
-        PolynomialType new_divider(divider, new_order);
+        PolynomialType new_divider(divider);
         std::vector<PolynomialType> new_divisors;
         new_divisors.reserve(divisors.size());
         for (const auto& p : divisors) {
-            new_divisors.push_back(PolynomialType(p, new_order));
+            new_divisors.push_back(PolynomialType(p));
         }
         return reduce_by(new_divider, new_divisors, nullptr);
     }
@@ -137,7 +131,7 @@ namespace SALIB {
                     criterion = true;
             }
             if (lcm_i_j != i_lt * j_lt && !criterion) {
-                PolynomialType s = PolynomialType::s_polynomial(ideal[i], ideal[j], ideal[i].get_order());
+                PolynomialType s = PolynomialType::s_polynomial(ideal[i], ideal[j]);
                 s = reduce_by(s, ideal);
                 if (!s.is_zero()) {
                     ideal.push_back(s);
@@ -153,13 +147,12 @@ namespace SALIB {
     template <typename SetOrder>
     typename PolyAlg<CoefficientType, Order>::PolySet
     PolyAlg<CoefficientType, Order>::make_groebner_basis(
-        const PolynomialSet<CoefficientType, SetOrder>& ideal,
-        const Order& new_order
+        const PolynomialSet<CoefficientType, SetOrder>& ideal
     ) {
         std::vector<PolynomialType> new_ideal;
         new_ideal.reserve(ideal.size());
         for (const auto& p : ideal) {
-            new_ideal.push_back(PolynomialType(p, new_order));
+            new_ideal.push_back(PolynomialType(p));
         }
         make_groebner_basis(new_ideal);
         PolySet basis;
@@ -174,11 +167,11 @@ namespace SALIB {
     bool
     PolyAlg<CoefficientType, Order>::is_polynomial_in_ideal(
         const Polynomial<CoefficientType, PolyOrder>& poly,
-        const PolynomialSet<CoefficientType, SetOrder>& ideal,
-        const Order& new_order)
+        const PolynomialSet<CoefficientType, SetOrder>& ideal
+        )
     {
-        PolySet basis = make_groebner_basis(ideal, new_order);
-        PolynomialType reduced = reduce_by(poly, basis, new_order);
+        PolySet basis = make_groebner_basis(ideal);
+        PolynomialType reduced = reduce_by(poly, basis);
         return reduced.is_zero();
     }
 
@@ -188,15 +181,15 @@ namespace SALIB {
     PolyAlg<CoefficientType, Order>::is_polynomial_in_radical(
         const Polynomial<CoefficientType, PolyOrder>& poly,
         const PolynomialSet<CoefficientType, SetOrder>& ideal,
-        Monomial::VariableIndexType free_variable,
-        const Order& new_order)
+        Monomial::VariableIndexType free_variable
+        )
     {
-        PolynomialType t = PolynomialType(Monomial(free_variable, 1), CoefficientType(1), new_order);
-        PolynomialType one = PolynomialType(CoefficientType(1), new_order);
+        PolynomialType t = PolynomialType(CoefficientType(1), Monomial(free_variable, 1));
+        PolynomialType one = PolynomialType(CoefficientType(1));
         PolySet ideal_copy(ideal);
         ideal_copy.add(one - t * poly);
-        PolySet basis = make_groebner_basis(ideal_copy, new_order);
-        PolynomialType reduced = reduce_by(one, basis, new_order);
+        PolySet basis = make_groebner_basis(ideal_copy);
+        PolynomialType reduced = reduce_by(one, basis);
         return reduced.is_zero();
         
     }
@@ -207,13 +200,13 @@ namespace SALIB {
     PolyAlg<CoefficientType, Order>::intersect_ideals(
         const PolynomialSet<CoefficientType, SetOrder>& ideal1,
         const PolynomialSet<CoefficientType, SetOrder>& ideal2,
-        Monomial::VariableIndexType free_variable,
-        const Order& new_order)
+        Monomial::VariableIndexType free_variable
+        )
     {
-        PolynomialType t = PolynomialType(Monomial(free_variable, 1), CoefficientType(1), new_order);
-        PolynomialType one = PolynomialType(CoefficientType(1), new_order);
+        PolynomialType t = PolynomialType(CoefficientType(1), Monomial(free_variable, 1));
+        PolynomialType one = PolynomialType(CoefficientType(1));
         PolySet new_ideal = ideal1 * t + ideal2 * (one - t);
-        PolySet basis = make_groebner_basis(new_ideal, new_order);
+        PolySet basis = make_groebner_basis(new_ideal);
         basis.remove_depending_polynomials(free_variable);
         return basis;
     }

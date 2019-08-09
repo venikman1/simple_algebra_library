@@ -10,19 +10,18 @@ namespace SALIB {
     class Polynomial {
     public:
         using MonomialMap = std::map<Monomial, CoefficientType, Order>;
-        using iterator = typename MonomialMap::iterator;
         using const_iterator = typename MonomialMap::const_iterator;
-        using reverse_iterator = typename MonomialMap::reverse_iterator;
         using const_reverse_iterator = typename MonomialMap::const_reverse_iterator;
 
-        Polynomial(const Order& ord = Order());
-        Polynomial(const Monomial& mono, const CoefficientType& coeff = CoefficientType(1), const Order& ord = Order());
-        Polynomial(const CoefficientType& coeff, const Order& ord = Order());
+        Polynomial() = default;
+        Polynomial(const Monomial& mono);
+        Polynomial(const CoefficientType& coeff, const Monomial& mono);
+        Polynomial(const CoefficientType& coeff);
 
-        static Polynomial s_polynomial(const Polynomial& a, const Polynomial& b, const Order& ord = Order());
+        static Polynomial s_polynomial(const Polynomial& a, const Polynomial& b);
 
         template <typename CoefficientTypeOther, typename OrderOther> 
-        Polynomial(const Polynomial<CoefficientTypeOther, OrderOther>& other, const Order& ord = Order());
+        Polynomial(const Polynomial<CoefficientTypeOther, OrderOther>& other);
 
         const CoefficientType& operator[](const Monomial &mono) const;
 
@@ -33,10 +32,28 @@ namespace SALIB {
 
         Polynomial& operator+=(const Polynomial& other);
         Polynomial& operator-=(const Polynomial& other);
-        Polynomial operator*(const Polynomial& other) const;
+        friend Polynomial<CoefficientType, Order> operator*(const Polynomial<CoefficientType, Order>& a, const Polynomial<CoefficientType, Order>& b) {
+            Polynomial<CoefficientType, Order> res;
+            for (const auto& it1 : a.monomials) {
+                for (const auto& it2 : b.monomials) {
+                    res += Polynomial<CoefficientType, Order>(it1.second * it2.second, it1.first * it2.first);
+                }
+            }
+            res.clean_empty_monomials();
+            return res;
+        }
         Polynomial& operator*=(const Polynomial& other);
-        Polynomial operator+(const Polynomial& other) const;
-        Polynomial operator-(const Polynomial& other) const;
+        friend Polynomial<CoefficientType, Order> operator+(const Polynomial<CoefficientType, Order>& a, const Polynomial<CoefficientType, Order>& b) {
+            Polynomial<CoefficientType, Order> res(a);
+            res += b;
+            return res;
+        }
+        friend Polynomial<CoefficientType, Order> operator-(const Polynomial<CoefficientType, Order>& a, const Polynomial<CoefficientType, Order>& b) {
+            Polynomial<CoefficientType, Order> res(a);
+            res -= b;
+            return res;
+
+        }
         Polynomial operator-() const;
         Polynomial operator+() const;
 
@@ -47,14 +64,8 @@ namespace SALIB {
 
         Polynomial get_largest_monomial_as_poly() const;
 
-        Order get_order() const;
-
-        iterator begin();
-        iterator end();
         const_iterator begin() const;
         const_iterator end() const;
-        reverse_iterator rbegin();
-        reverse_iterator rend();
         const_reverse_iterator rbegin() const;
         const_reverse_iterator rend() const;
     
@@ -77,54 +88,25 @@ namespace SALIB {
     const Monomial Polynomial<CoefficientType, Order>::empty_monomial = Monomial();
 
     template <typename CoefficientType, typename Order>
-    Order Polynomial<CoefficientType, Order>::get_order() const {
-        return monomials.key_comp();
+    Polynomial<CoefficientType, Order>::Polynomial(
+            const Monomial& mono
+    ) {
+        monomials[mono] = CoefficientType(1);
     }
-
-    template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order>
-    operator*(
-        const Polynomial<CoefficientType, Order>& poly,
-        const CoefficientType& coeff) {
-        return poly * Polynomial<CoefficientType, Order>(coeff, poly.get_order());
-    }
-
-    template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order>
-    operator*(
-        const CoefficientType& coeff,
-        const Polynomial<CoefficientType, Order>& poly
-        ) {
-        return poly * coeff;
-    }
-
-    template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order>
-    operator+(
-        const CoefficientType& coeff,
-        const Polynomial<CoefficientType, Order>& poly
-        ) {
-        return poly + Polynomial<CoefficientType, Order>(coeff, poly.get_order());
-    }
-
-    template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order>::Polynomial(const Order& ord) : monomials(ord) {}
 
     template <typename CoefficientType, typename Order>
     Polynomial<CoefficientType, Order>::Polynomial(
-        const Monomial& mono,
-        const CoefficientType& coeff,
-        const Order& ord
-    ) : monomials(ord) {
+            const CoefficientType& coeff,
+            const Monomial& mono
+    ) {
         if (coeff != null_coef)
             monomials[mono] = coeff;
     }
 
     template <typename CoefficientType, typename Order>
     Polynomial<CoefficientType, Order>::Polynomial(
-        const CoefficientType& coeff,
-        const Order& ord
-    ) : monomials(ord) {
+            const CoefficientType& coeff
+    ) {
         if (coeff != null_coef)
             monomials[empty_monomial] = coeff;
     }
@@ -132,23 +114,21 @@ namespace SALIB {
     template <typename CoefficientType, typename Order>
     Polynomial<CoefficientType, Order> Polynomial<CoefficientType, Order>::s_polynomial(
         const Polynomial& a,
-        const Polynomial& b,
-        const Order& ord
+        const Polynomial& b
     ) {
         Monomial a_lt = a.get_largest_monomial();
         Monomial b_lt = b.get_largest_monomial();
         Monomial l = Monomial::lcm(a_lt, b_lt);
-        Polynomial res = a * Polynomial(l / a_lt, CoefficientType(1) / a[a_lt], a.get_order());
-        res -= b * Polynomial(l / b_lt, CoefficientType(1) / b[b_lt], a.get_order());
+        Polynomial res = a * (l / a_lt) * (CoefficientType(1) / a[a_lt]);
+        res -= b * (l / b_lt) * (CoefficientType(1) / b[b_lt]);
         return res;
     }
 
     template <typename CoefficientType, typename Order>
     template <typename CoefficientTypeOther, typename OrderOther>
     Polynomial<CoefficientType, Order>::Polynomial(
-        const Polynomial<CoefficientTypeOther, OrderOther>& other,
-        const Order& ord
-    ) : monomials(ord) {
+        const Polynomial<CoefficientTypeOther, OrderOther>& other
+    ) {
         for (const auto& it : other) {
             CoefficientType coeff = CoefficientType(it.second);
             if (coeff != null_coef)
@@ -201,15 +181,8 @@ namespace SALIB {
     }
 
     template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order> Polynomial<CoefficientType, Order>::operator*(const Polynomial& other) const {
-        Polynomial res(this->get_order());
-        for (const auto& it1 : monomials) {
-            for (const auto& it2 : other.monomials) {
-                res += Polynomial(it1.first * it2.first, it1.second * it2.second);
-            }
-        }
-        res.clean_empty_monomials();
-        return res;
+    Polynomial<CoefficientType, Order> operator*(const Polynomial<CoefficientType, Order>& a, const Polynomial<CoefficientType, Order>& b) {
+
     }
 
     template <typename CoefficientType, typename Order>
@@ -220,16 +193,14 @@ namespace SALIB {
     }
 
     template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order> Polynomial<CoefficientType, Order>::operator+(const Polynomial& other) const {
-        Polynomial res(*this);
-        res += other;
-        return res;
+    Polynomial<CoefficientType, Order> operator+(const Polynomial<CoefficientType, Order>& a, const Polynomial<CoefficientType, Order>& b)  {
+
     }
 
     template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order> Polynomial<CoefficientType, Order>::operator-(const Polynomial& other) const {
-        Polynomial res(*this);
-        res -= other;
+    Polynomial<CoefficientType, Order> operator-(const Polynomial<CoefficientType, Order>& a, const Polynomial<CoefficientType, Order>& b)  {
+        Polynomial<CoefficientType, Order> res(a);
+        res -= b;
         return res;
     }
 
@@ -279,17 +250,7 @@ namespace SALIB {
     template <typename CoefficientType, typename Order>
     Polynomial<CoefficientType, Order> Polynomial<CoefficientType, Order>::get_largest_monomial_as_poly() const {
         const Monomial& largest_mono = get_largest_monomial();
-        return Polynomial(largest_mono, (*this)[largest_mono]);
-    }
-
-    template <typename CoefficientType, typename Order>
-    typename Polynomial<CoefficientType, Order>::iterator Polynomial<CoefficientType, Order>::begin() {
-        return monomials.begin();
-    }
-
-    template <typename CoefficientType, typename Order>
-    typename Polynomial<CoefficientType, Order>::iterator Polynomial<CoefficientType, Order>::end() {
-        return monomials.end();
+        return Polynomial((*this)[largest_mono], largest_mono);
     }
 
     template <typename CoefficientType, typename Order>
@@ -300,16 +261,6 @@ namespace SALIB {
     template <typename CoefficientType, typename Order>
     typename Polynomial<CoefficientType, Order>::const_iterator Polynomial<CoefficientType, Order>::end() const {
         return monomials.end();
-    }
-
-    template <typename CoefficientType, typename Order>
-    typename Polynomial<CoefficientType, Order>::reverse_iterator Polynomial<CoefficientType, Order>::rbegin() {
-        return monomials.rbegin();
-    }
-
-    template <typename CoefficientType, typename Order>
-    typename Polynomial<CoefficientType, Order>::reverse_iterator Polynomial<CoefficientType, Order>::rend() {
-        return monomials.rend();
     }
 
     template <typename CoefficientType, typename Order>
