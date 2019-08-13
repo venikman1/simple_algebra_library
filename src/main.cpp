@@ -11,6 +11,7 @@
 #include "algorithms.h"
 #include "speed_tests.h"
 #include "stopwatch.h"
+#include <boost/multiprecision/gmp.hpp>
 
 using std::cout;
 using std::cin;
@@ -18,37 +19,7 @@ using std::cerr;
 
 using namespace SALIB;
 
-struct Field {
-    unsigned long long n;
-    static const unsigned long long inv[5];
-    Field():n(0) {}
-    Field(unsigned long long n):n(n%5) {}
-    Field& operator*=(const Field& other) { n*=other.n; n%=5; return *this;}
-    Field& operator+=(const Field& other) { n+=other.n; n%=5; return *this;}
-    Field& operator-=(const Field& other) { n+=(5 - other.n); n%=5; return *this;}
-    Field& operator/=(const Field& other) { return (*this) *= Field(inv[other.n]);}
 
-    Field operator*(const Field& other) const { Field res(*this); res *= other; return res;}
-    Field operator+(const Field& other) const { Field res(*this); res += other; return res;}
-    Field operator-(const Field& other) const { Field res(*this); res -= other; return res;}
-    Field operator/(const Field& other) const { Field res(*this); res /= other; return res;}
-
-    Field operator+() const { Field res(*this); return res;}
-    Field operator-() const { Field res(*this); res.n = (5 - res.n) % 5; return res;}
-
-    bool operator==(const Field& other) const {return n == other.n;} ;
-    bool operator!=(const Field& other) const {return n != other.n;} ; 
-};
-const unsigned long long Field::inv[5] = {0, 1, 3, 2, 4};
-std::ostream& operator<<(std::ostream& out, const Field& f) {return out << f.n;}
-namespace std {
-    template<>
-    struct hash<Field> {
-        size_t operator()(const Field& f) const {
-            return f.n;
-        }
-    };
-}
 
 struct Kek1 {
     static int cmp(const Monomial&, const Monomial&) {

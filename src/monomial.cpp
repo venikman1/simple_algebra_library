@@ -18,16 +18,22 @@ namespace SALIB {
     }
 
     Monomial::Monomial(const std::initializer_list<VariableDegreeType>& init_list)
-        : variables(init_list) {}
+        : variables(init_list) {
+        degree = 0;
+        for (auto deg : variables)
+            degree += deg;
+    }
 
     Monomial::Monomial(VariableIndexType var_index, VariableDegreeType var_degree) {
         (*this)[var_index] = var_degree;
+        degree = var_degree;
     }
 
     Monomial Monomial::lcm(const Monomial& a, const Monomial& b) {
         Monomial res(a);
         for (size_t i = 0; i < b.variables.size(); ++i) {
             res[i] = std::max(res[i], b[i]);
+            res.degree += std::max(res[i], b[i]) - res[i];
         }
         return res;
     }
@@ -35,6 +41,7 @@ namespace SALIB {
     Monomial& Monomial::operator*=(const Monomial& other) {
         for (size_t i = 0; i < other.variables.size(); ++i) {
             (*this)[i] += other[i];
+            degree += other[i];
         }
         return *this;
     }
@@ -50,6 +57,7 @@ namespace SALIB {
             assert((*this)[i] >= other[i]);
             #endif
             (*this)[i] -= other[i];
+            degree -= other[i];
         }
         return *this;
     }
@@ -72,11 +80,12 @@ namespace SALIB {
     }
 
     bool Monomial::is_zero() const {
-        for (const auto& pw : variables) {
-            if (pw != 0)
-                return false;
-        }
-        return true;
+        return degree == 0;
+//        for (const auto& pw : variables) {
+//            if (pw != 0)
+//                return false;
+//        }
+//        return true;
     }
 
     Monomial::VariableDegreeType& Monomial::operator[](VariableIndexType var_index) {
@@ -93,14 +102,7 @@ namespace SALIB {
 
     void Monomial::zero_all_powers() {
         variables.clear();
-    }
-
-    Monomial::iterator Monomial::begin() {
-        return variables.begin();
-    }
-
-    Monomial::iterator Monomial::end() {
-        return variables.end();
+        degree = 0;
     }
 
     Monomial::const_iterator Monomial::begin() const {
@@ -111,19 +113,16 @@ namespace SALIB {
         return variables.end();
     }
 
-    Monomial::reverse_iterator Monomial::rbegin() {
-        return variables.rbegin();
-    }
-
-    Monomial::reverse_iterator Monomial::rend() {
-        return variables.rend();
-    }
-
     Monomial::const_reverse_iterator Monomial::rbegin() const {
         return variables.rbegin();
     }
 
     Monomial::const_reverse_iterator Monomial::rend() const {
         return variables.rend();
+    }
+
+    void Monomial::set_var_degree(VariableIndexType var, VariableDegreeType deg) {
+        degree += deg - (*this)[var];
+        (*this)[var] = deg;
     }
 }

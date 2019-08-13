@@ -237,6 +237,8 @@ namespace SALIB {
         while (!pairs.empty()) {
             size_t i = pairs.front().first;
             size_t j = pairs.front().second;
+            if (i + 1 == j)
+                std::cerr << j << " processed, ideal size is " << ideal.size() << "\n";
             pairs.pop();
             Monomial i_lt = ideal[i].get_largest_monomial();
             Monomial j_lt = ideal[j].get_largest_monomial();

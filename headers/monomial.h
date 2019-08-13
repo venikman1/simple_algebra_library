@@ -28,7 +28,6 @@ namespace SALIB {
 
         bool is_dividable_by(const Monomial& other) const;
 
-        VariableDegreeType& operator[](VariableIndexType var_index);
         VariableDegreeType operator[](VariableIndexType var_index) const;
 
         void zero_all_powers();
@@ -39,16 +38,23 @@ namespace SALIB {
 
         bool is_depends_on_variable(VariableIndexType var_index) const;
 
-        iterator begin();
-        iterator end();
         const_iterator begin() const;
         const_iterator end() const;
-        reverse_iterator rbegin();
-        reverse_iterator rend();
         const_reverse_iterator rbegin() const;
         const_reverse_iterator rend() const;
 
+        void set_var_degree(VariableIndexType var, VariableDegreeType deg);
+
+        inline VariableDegreeType get_degree() const;
     private:
+        VariableDegreeType& operator[](VariableIndexType var_index);
+
         VariablesContainer variables;
+        VariableDegreeType degree;
     };
+
+
+    Monomial::VariableDegreeType Monomial::get_degree() const {
+        return degree;
+    }
 }
