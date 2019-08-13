@@ -1,78 +1,88 @@
-//#include <iostream>
-//#include <cassert>
-//#include <string>
-//#include <boost/rational.hpp>
-//#include <vector>
-//
-//#include "polynomial.h"
-//#include "polynomial_set.h"
-//#include "algebra_io.h"
-//#include "tests.h"
-//#include "algorithms.h"
-//#include "speed_tests.h"
-//
-//#include <random>
-//
-//using std::cout;
-//using std::cin;
-//using std::cerr;
-//
-//using namespace SALIB;
-//std::random_device rd;
-//std::mt19937 mt(rd());
-//
+#include <iostream>
+#include <cassert>
+#include <string>
+#include <boost/rational.hpp>
+#include <vector>
+#include <boost/multiprecision/gmp.hpp>
+
+#include "polynomial.h"
+#include "polynomial_set.h"
+#include "algebra_io.h"
+#include "tests.h"
+#include "algorithms.h"
+#include "speed_tests.h"
+#include "stopwatch.h"
+#include "orders.h"
+
+#include <random>
+
+using namespace std;
+
+using namespace SALIB;
+std::random_device rd;
+std::mt19937 mt(rd());
+
 //using Rat = boost::rational<long long>;
-//using Poly = Polynomial<Rat>;
-//using DefPoly = Polynomial<Rat>;
-//using PolySet = PolynomialSet<Rat>;
-//using DefPolySet = PolynomialSet<Rat>;
-//
-//Monomial random_monomial(size_t var_limit, int count = 10) {
-//    Monomial res;
-//    for (int i = 0; i < count; ++i) {
-//        ++res[mt() % var_limit];
-//    }
-//    return res;
-//}
-//
-//DefPoly random_polynomial(size_t var_limit = 4, int monomial_count = 3, int count = 3) {
-//    DefPoly res;
-//    for (int i = 0; i < monomial_count; ++i) {
-//        res += DefPoly(random_monomial(var_limit, count), Rat(mt() % 5));
-//    }
-//    return res;
-//}
-//
-//void do_calculation(int count) {
-//    // CustomOrder grlex(
-//    //     &GradientSemiOrder::cmp,
-//    //     &MonoLexOrder::cmp
-//    // );
-//    DefaultOrder grlex;
-//
-//    PolyAlg<Rat, DefaultOrder> algo;
-//    DefPoly one = Poly(Rat(1));
-//    long long full_ideals = 0;
-//    for (int i = 0; i < count; ++i) {
-//        DefPolySet ideal;
-//        for (int j = 0; j < 5; ++j) {
-//            ideal.add(random_polynomial());
-//        }
-//        if (algo.is_polynomial_in_ideal(one, ideal, grlex)) {
-//            ++full_ideals;
-//        } else {
-//            DefPoly p;
-//            for (const auto& pd : ideal) {
-//                p += random_polynomial() * pd;
-//            }
-//            assert(algo.is_polynomial_in_ideal(p, ideal, grlex) == true);
-//            assert(algo.is_polynomial_in_ideal(p + one, ideal, grlex) == false);
-//        }
-//    }
-//    cerr << count << " ideals were generated\n";
-//    cerr << full_ideals << " ideals contained a constant\n";
-//}
-//
-//void use_all_pc_power() {
-//    do_calculation(1);
-//}
+using Rat = boost::multiprecision::mpq_rational;
+using Poly = Polynomial<Rat>;
+using PolySet = PolynomialSet<Rat>;
+using PolyVec = vector<Poly>;
+
+template <typename Func>
+void get_all_combinations(int n, int k, Func callback, int last_used, vector<int>& result) {
+    int current_size = result.size();
+    int need_get = k - current_size;
+    int can_get = n - 1 - last_used;
+    if (need_get > can_get)
+        return;
+    if (need_get == 0) {
+        callback(static_cast<const vector<int> &>(result));
+        return;
+    }
+    for (int idx = last_used + 1; idx < n; ++idx) {
+        result.push_back(idx);
+        get_all_combinations(n, k, callback, idx, result);
+        result.pop_back();
+    }
+}
+
+template <typename Func>
+void get_all_combinations(int n, int k, Func callback) {
+    vector<int> res;
+    get_all_combinations(n, k, callback, -1, res);
+}
+
+Poly get_symmetric_k(int n, int k) {
+    Poly res;
+    get_all_combinations(n, k, [&res](const vector<int> & comb) {
+        Poly poly_comb = Rat(1);
+        for (auto idx : comb) {
+            poly_comb *= Monomial(idx);
+        }
+        res += poly_comb;
+    });
+    return res;
+}
+
+void calc_cyclic_n(int n) {
+//    using PolyAlgTemp = PolyAlg<Rat>;
+
+    using DegRevLex = CustomOrder<MonoGradientSemiOrder, RevOrder<MonoLexOrder>>; // Change order here
+//    using DegRevLex = MonoLexOrder;
+    using PolyAlgTemp = PolyAlg<Rat, DegRevLex>;
+    using DegRevLexPolySet = PolynomialSet<Rat, DegRevLex>;
+
+    PolySet ideal;
+    for (int idx = 1; idx < n; ++idx) {
+        ideal.add(get_symmetric_k(n, idx));
+    }
+    ideal.add(get_symmetric_k(n, n) - Poly(Rat(n % 2 == 0 ? -1 : 1)));
+
+    PolyAlgTemp algo;
+    DegRevLexPolySet basis = algo.make_groebner_basis(ideal);
+    basis = algo.auto_reduce(basis);
+    cout << "Groebner basis:\n";
+    for (const auto& poly : basis) {
+        cout << " > " << poly << "\n";
+    }
+}

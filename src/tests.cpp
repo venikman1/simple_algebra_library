@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cassert>
 #include <string>
-#include <boost/rational.hpp>
 #include <vector>
 
 #include "polynomial.h"
@@ -9,6 +8,7 @@
 #include "algebra_io.h"
 #include "tests.h"
 #include "algorithms.h"
+#include <boost/rational.hpp>
 
 using std::cout;
 using std::cin;
@@ -178,7 +178,7 @@ void hash_tests() {
     Monomial a; 
     a[0] = 2; a[1] = 4;
     const Monomial b{0, 0, 3, 5, 1, 2};
-    std::hash<Monomial> mono_hash; 
+    boost::hash<Monomial> mono_hash;
     assert(mono_hash(b) == mono_hash(b));
     assert(mono_hash(a) != mono_hash(b));
     Monomial a_copy = a;
@@ -188,7 +188,7 @@ void hash_tests() {
 
     // boost::rational
     using Rat = boost::rational<long long>;
-    std::hash<Rat> rat_hash; 
+    boost::hash<Rat> rat_hash;
     Rat ra(2, 3);
     Rat rb(4, 6);
     assert(rat_hash(ra) == rat_hash(rb));
@@ -200,7 +200,7 @@ void hash_tests() {
 
     // polynomials
     using PolyTest = Polynomial<boost::rational<long long>>;
-    std::hash<PolyTest> poly_hash; 
+    boost::hash<PolyTest> poly_hash;
     PolyTest x = Monomial{1};
     PolyTest y = Monomial{0, 1};
     PolyTest z = Monomial{0, 0, 1};

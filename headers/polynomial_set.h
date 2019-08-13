@@ -5,43 +5,28 @@
 #include "orders.h"
 #include <utility>
 #include <iostream>
+#include <boost/rational.hpp>
 
-namespace std {
-    template <>
-    struct hash<SALIB::Monomial>
-    {
-        inline size_t operator()(const SALIB::Monomial& mono) const;
+namespace boost {
+    using namespace SALIB;
+    inline size_t hash_value(const Monomial& mono);
 
-        const static size_t base = 227;
-    };
+    template <typename IntType>
+    size_t hash_value(const boost::rational<IntType>& coeff);
 
-    template <typename T>
-    struct hash<boost::rational<T>>
-    {
-        inline size_t operator()(const boost::rational<long long>& num) const;
-
-        const static size_t a = 15485941;
-        const static size_t b = 15487399;
-    };
-    
     template <typename CoefficientType, typename Order>
-    struct hash<SALIB::Polynomial<CoefficientType, Order>>
-    {
-        inline size_t operator()(const SALIB::Polynomial<CoefficientType, Order>& poly) const;
-        const static size_t base = 283;
-    };
+    size_t hash_value(const Polynomial<CoefficientType, Order>& poly);
 }
 
-namespace SALIB {
-    inline size_t overflowing_binary_pow(size_t x, size_t y);
+#include <boost/functional/hash.hpp>
 
+namespace SALIB {
     template <typename CoefficientType, typename Order = MonoLexOrder>
     class PolynomialSet {
     public:
         using PolynomialType = Polynomial<CoefficientType, Order>;
-        using HashType = std::hash<PolynomialType>;
+        using HashType = boost::hash<PolynomialType>;
         using PolynomialContainer = std::unordered_set<PolynomialType, HashType>;
-        using iterator = typename PolynomialContainer::iterator;
         using const_iterator = typename PolynomialContainer::const_iterator;
 
         PolynomialSet() = default;
@@ -67,54 +52,10 @@ namespace SALIB {
     private:
         PolynomialContainer polynomials;
     };
-}
+
 /*
 =================================IMPLEMENTATION================================= 
 */
-
-namespace std {
-    size_t hash<SALIB::Monomial>::operator()(const SALIB::Monomial& mono) const {
-        size_t res = 0;
-        for (auto it = mono.rbegin(); it != mono.rend(); ++it) {
-            res *= base;
-            res += *it;
-        }
-        return res;
-    }
-
-    template <typename T>
-    size_t hash<boost::rational<T>>::operator()(const boost::rational<long long>& num) const {
-        return ((size_t)num.numerator() * a) + ((size_t)num.denominator() * b);
-    }
-    
-    template <typename CoefficientType, typename Order>
-    size_t hash<SALIB::Polynomial<CoefficientType, Order>>::operator()(
-        const SALIB::Polynomial<CoefficientType, Order>& poly
-    ) const {
-        const static std::hash<SALIB::Monomial> mono_hash;
-        const static std::hash<CoefficientType> coeff_hash; 
-        size_t res = 0;
-        for (const auto& mono_coef : poly) {
-            res += SALIB::overflowing_binary_pow(
-                mono_hash(mono_coef.first),
-                coeff_hash(mono_coef.second)
-            );
-        }
-        return res;
-    }
-}
-
-namespace SALIB {
-    size_t overflowing_binary_pow(size_t x, size_t y) {
-        if (y == 0)
-            return 1;
-        if (y & 1) {
-            return overflowing_binary_pow(x, y ^ 1) * y;
-        } else {
-            size_t p = overflowing_binary_pow(x, y >> 1);
-            return p * p;
-        }
-    }
     
     template <typename CoefficientType, typename Order>
     void PolynomialSet<CoefficientType, Order>::add(const PolynomialType& poly) {
@@ -202,4 +143,44 @@ namespace SALIB {
     PolynomialSet<CoefficientType, Order>::end() const {
         return polynomials.end();
     }
-};
+}
+
+namespace boost {
+    using namespace SALIB;
+    size_t hash_value(const Monomial& mono)
+    {
+        size_t seed = 0;
+        size_t idx = 0;
+        for (auto deg : mono) {
+            if (deg) {
+                boost::hash_combine(seed, deg);
+                boost::hash_combine(seed, idx);
+            }
+            ++idx;
+        }
+        return seed;
+    }
+
+    template <typename IntType>
+    size_t hash_value(const boost::rational<IntType>& coeff)
+    {
+        size_t seed = 0;
+        boost::hash_combine(seed, coeff.numerator());
+        boost::hash_combine(seed, coeff.denominator());
+        return seed;
+    }
+
+    template <typename CoefficientType, typename Order>
+    size_t hash_value(const Polynomial<CoefficientType, Order>& poly) {
+        boost::hash<Monomial> mono_hasher;
+        boost::hash<CoefficientType> coeff_hasher;
+
+        size_t seed = 0;
+        for (const auto& c_m : poly) {
+            boost::hash_combine(seed, mono_hasher(c_m.first));
+            boost::hash_combine(seed, coeff_hasher(c_m.second));
+        }
+        return seed;
+    }
+
+}

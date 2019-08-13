@@ -119,8 +119,8 @@ namespace SALIB {
         Monomial a_lt = a.get_largest_monomial();
         Monomial b_lt = b.get_largest_monomial();
         Monomial l = Monomial::lcm(a_lt, b_lt);
-        Polynomial res = a * (l / a_lt) * (CoefficientType(1) / a[a_lt]);
-        res -= b * (l / b_lt) * (CoefficientType(1) / b[b_lt]);
+        Polynomial res = a * Polynomial(l / a_lt) * Polynomial(CoefficientType(1) / a[a_lt]);
+        res -= b * Polynomial(l / b_lt) * Polynomial(CoefficientType(1) / b[b_lt]);
         return res;
     }
 

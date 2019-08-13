@@ -3,6 +3,7 @@
 #include <vector>
 #include <queue>
 #include <iostream>
+#include <utility>
 
 namespace SALIB {
     template <typename CoefficientType, typename Order = DefaultOrder>
@@ -12,7 +13,7 @@ namespace SALIB {
         using PolySet = PolynomialSet<CoefficientType, Order>;
 
         static PolynomialType reduce_by(
-            const PolynomialType& divider,
+            PolynomialType divider,
             const std::vector<PolynomialType>& divisors,
             std::vector<PolynomialType>* incomplete_quotients = 0
         );
@@ -24,6 +25,8 @@ namespace SALIB {
         );
 
         static void make_groebner_basis(std::vector<PolynomialType>& ideal);
+
+        static PolySet auto_reduce(const PolySet& ideal);
 
         template <typename SetOrder>
         static PolySet make_groebner_basis(
@@ -49,45 +52,150 @@ namespace SALIB {
             const PolynomialSet<CoefficientType, SetOrder>& ideal2,
             Monomial::VariableIndexType free_variable
         );
+    private:
+        static bool try_to_reduce(
+                PolynomialType& divider,
+                const std::vector<PolynomialType>& divisors,
+                std::vector<PolynomialType>* incomplete_quotients);
+
+        static bool reduce_by_one(
+                PolynomialType& divider,
+                const PolynomialType& divisor,
+                PolynomialType* incomplete_quotient);
     };
 
-/*
-=================================IMPLEMENTATION================================= 
+    class PairMaker {
+    public:
+        inline explicit PairMaker(size_t n);
+
+        class iterator {
+        public:
+            using Value = std::pair<size_t, size_t>;
+
+            inline iterator(Value v);
+
+            inline iterator& operator++();
+            inline iterator operator++(int);
+            inline const Value& operator*();
+            inline const Value* operator->();
+
+            inline bool operator==(const iterator& other);
+            inline bool operator!=(const iterator& other);
+        private:
+            Value value;
+        };
+
+        inline iterator begin() const;
+        inline iterator end() const;
+    private:
+        size_t n;
+    };
+
+
+    /*
+=================================IMPLEMENTATION=================================
 */
+    PairMaker::iterator::iterator(PairMaker::iterator::Value v) : value(std::move(v)) {}
+
+    PairMaker::iterator &PairMaker::iterator::operator++() {
+        if (value.first + 1 == value.second) {
+            ++value.second;
+            value.first = 0;
+        }
+        else
+            ++value.first;
+        return *this;
+    }
+
+    PairMaker::iterator PairMaker::iterator::operator++(int) {
+        iterator copy(*this);
+        ++(*this);
+        return copy;
+    }
+
+    const PairMaker::iterator::Value &PairMaker::iterator::operator*() {
+        return value;
+    }
+
+    const PairMaker::iterator::Value *PairMaker::iterator::operator->() {
+        return &value;
+    }
+
+    bool PairMaker::iterator::operator==(const PairMaker::iterator &other) {
+        return value == other.value;
+    }
+
+    bool PairMaker::iterator::operator!=(const PairMaker::iterator &other) {
+        return value != other.value;
+    }
+
+    PairMaker::iterator PairMaker::begin() const {
+        if (n < 2)
+            return PairMaker::iterator({-1, -1});
+        return PairMaker::iterator({0, 1});
+    }
+
+    PairMaker::iterator PairMaker::end() const {
+        if (n < 2)
+            return PairMaker::iterator({-1, -1});
+        return PairMaker::iterator({n - 2, n});
+    }
+
+    PairMaker::PairMaker(size_t n) : n(n) {}
+
+    template <typename CoefficientType, typename Order>
+    bool PolyAlg<CoefficientType, Order>::reduce_by_one(
+            PolynomialType& divider,
+            const PolynomialType& divisor,
+            PolynomialType* incomplete_quotient) {
+        Monomial divider_lt = divider.get_largest_monomial();
+        Monomial divisor_lt = divisor.get_largest_monomial();
+        if (divider.is_zero() || !divider_lt.is_dividable_by(divisor_lt))
+            return false;
+
+        while (!divider.is_zero() && divider_lt.is_dividable_by(divisor_lt)) {
+            PolynomialType subs(divider[divider_lt] / divisor[divisor_lt], divider_lt / divisor_lt);
+            if (incomplete_quotient)
+                (*incomplete_quotient) += subs;
+            divider -= subs * divisor;
+
+            divider_lt = divider.get_largest_monomial();
+            divisor_lt = divisor.get_largest_monomial();
+        }
+        return true;
+    }
+
+    template <typename CoefficientType, typename Order>
+    bool PolyAlg<CoefficientType, Order>::try_to_reduce(
+            PolynomialType& divider,
+            const std::vector<PolynomialType>& divisors,
+            std::vector<PolynomialType>* incomplete_quotients) {
+        bool is_reduced = false;
+        for (size_t i = 0; i < divisors.size() && not divider.is_zero(); ++i) {
+            is_reduced |= reduce_by_one(divider, divisors[i], (incomplete_quotients) ? &(*incomplete_quotients)[i] : nullptr);
+        }
+        return is_reduced;
+    }
 
     template <typename CoefficientType, typename Order>
     typename PolyAlg<CoefficientType, Order>::PolynomialType
     PolyAlg<CoefficientType, Order>::reduce_by(
-        const PolynomialType& divider,
+        PolynomialType divider,
         const std::vector<PolynomialType>& divisors,
         std::vector<PolynomialType>* incomplete_quotients
     ) {
-        if (incomplete_quotients) incomplete_quotients->resize(divisors.size());
-        PolynomialType p = divider;
-        PolynomialType r;
-        while (!p.is_zero()) {
-            bool divided = false;
-            for (size_t i = 0; i < divisors.size();) {
-                Monomial p_lt = p.get_largest_monomial();
-                Monomial fi_lt = divisors[i].get_largest_monomial();
-                if (p_lt.is_dividable_by(fi_lt)) {
-                    if (incomplete_quotients) 
-                        (*incomplete_quotients)[i] += PolynomialType(p[p_lt] / divisors[i][fi_lt], p_lt / fi_lt);
-                    p -= PolynomialType(p[p_lt] / divisors[i][fi_lt], p_lt / fi_lt) * divisors[i];
-                    divided = true;
-                    if (p.is_zero())
-                        break;
-                }
-                else {
-                    ++i;
-                }
-            }
-            if (!divided) {
-                r += p.get_largest_monomial_as_poly();
-                p -= p.get_largest_monomial_as_poly();
-            }
+        if (incomplete_quotients) {
+            incomplete_quotients->assign(divisors.size(), PolynomialType());
         }
-        return r;
+        PolynomialType rest;
+        while (!divider.is_zero()) {
+            while (try_to_reduce(divider, divisors, incomplete_quotients)) {}
+
+            rest += divider.get_largest_monomial_as_poly();
+            divider -= divider.get_largest_monomial_as_poly();
+
+        }
+        return rest;
     }
 
     template <typename CoefficientType, typename Order>
@@ -107,16 +215,25 @@ namespace SALIB {
     }
 
     template <typename CoefficientType, typename Order>
+    typename PolyAlg<CoefficientType, Order>::PolySet PolyAlg<CoefficientType, Order>::auto_reduce(const PolySet& ideal) {
+        PolySet res(ideal);
+        for (const auto& poly : ideal) {
+            res.remove(poly);
+            PolynomialType reduced = reduce_by(poly, res);
+            res.add(reduced);
+        }
+        return res;
+    }
+
+    template <typename CoefficientType, typename Order>
     void
     PolyAlg<CoefficientType, Order>::make_groebner_basis(
         std::vector<PolynomialType>& ideal
     ) {
         std::queue<std::pair<size_t, size_t>> pairs;
-        for (size_t i = 0; i < ideal.size(); ++i) {
-            for (size_t j = 0; j < i; ++j) {
-                pairs.push(std::make_pair(j, i));
-            }
-        }
+        for (const auto& pr : PairMaker(ideal.size()))
+            pairs.push(pr);
+
         while (!pairs.empty()) {
             size_t i = pairs.front().first;
             size_t j = pairs.front().second;
@@ -134,6 +251,7 @@ namespace SALIB {
                 PolynomialType s = PolynomialType::s_polynomial(ideal[i], ideal[j]);
                 s = reduce_by(s, ideal);
                 if (!s.is_zero()) {
+//                    std::cerr << "Ideal size is " << ideal.size() << "\n";
                     ideal.push_back(s);
                     for (size_t t = 0; t < ideal.size() - 1; ++t) {
                         pairs.push(std::make_pair(t, ideal.size() - 1));
