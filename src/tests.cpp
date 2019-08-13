@@ -19,7 +19,7 @@ using namespace SALIB;
 void monomial_tests() {
     // Arithmetic tests
     Monomial a; 
-    a[0] = 2; a[1] = 4;
+    a.set_var_degree(0, 2); a.set_var_degree(1, 4);
     const Monomial b{0, 0, 3, 5, 1, 2};
     Monomial c;
     c = a * b;
@@ -31,9 +31,9 @@ void monomial_tests() {
 
     Monomial a_copy(a);
     assert(a == a_copy);
-    a[5324] = 0;
+    a.set_var_degree(5132, 0);
     assert(a == a_copy);
-    ++a[12];
+    a.set_var_degree(12, static_cast<const Monomial>(a)[12] + 1);
     assert(a != a_copy);
     cerr << "Monomial arithmetic tests OK!\n";
 
@@ -41,46 +41,46 @@ void monomial_tests() {
     MonoLexOrder order;
     a.zero_all_powers();
     c.zero_all_powers();
-    a[1] = 2;
-    c[1] = 2;
+    a.set_var_degree(1, 2);
+    c.set_var_degree(1, 2);
     assert(order(a, c) == false);
-    c[5] = 0;
+    c.set_var_degree(5, 0);
     assert(order(a, c) == false);
-    c[3] = 5;
+    c.set_var_degree(3, 5);
     assert(order(a, c) == true);
-    a[0] = 2;
+    a.set_var_degree(0, 2);
     assert(order(a, c) == false);
-    c[0] = 2;
+    c.set_var_degree(0, 2);
     assert(order(a, c) == true);
-    a[2] = 0;
+    a.set_var_degree(2, 0);
     assert(order(a, c) == true);
     a.zero_all_powers();
     c.zero_all_powers();
-    a[2] = 1;
-    a[5000] = 0;
-    c[2] = 1;
-    c[5001] = 0;
+    a.set_var_degree(2, 1);
+    a.set_var_degree(5000, 0);
+    c.set_var_degree(2, 1);
+    c.set_var_degree(5001, 0);
     assert(order.cmp(a, c) == 0);
     cerr << "Mono order tests OK!\n";
 
     // Mono cmp tests
     a.zero_all_powers();
     c.zero_all_powers();
-    c[1] = 0;
-    c[2] = 0;
+    c.set_var_degree(1, 0);
+    c.set_var_degree(2, 0);
     assert(order.cmp(a, c) == 0);
     assert(order.cmp(a * b, c * b) == 0);
-    c[5] = 4;
+    c.set_var_degree(5, 4);
     assert(order.cmp(a, c) < 0);
     assert(order.cmp(a * b, c * b) < 0);
-    a[5] = 5;
+    a.set_var_degree(5, 5);
     assert(order.cmp(a, c) > 0);
     assert(order.cmp(a * b, c * b) > 0);
-    a[5] = 4;
+    a.set_var_degree(5, 4);
     assert(order.cmp(a, c) == 0);
     assert(order.cmp(a * b, c * b) == 0);
-    c[0] = 2;
-    a[1] = 2;
+    c.set_var_degree(0, 2);
+    a.set_var_degree(1, 2);
     assert(order.cmp(a, c) < 0);
     assert(order.cmp(a * b, c * b) < 0);
     cerr << "Mono cmp tests OK!\n";
@@ -93,7 +93,7 @@ void monomial_tests() {
     a = Monomial({1, 2, 3, 0, 6});
     c = Monomial({0, 1, 1, 0, 2, 0, 0});
     assert(a.is_dividable_by(c) == true);
-    c[3] = 2;
+    c.set_var_degree(3, 2);
     assert(a.is_dividable_by(c) == false);
 
     Monomial d = Monomial::lcm(a, c);
@@ -175,14 +175,13 @@ void polynomial_tests() {
 
 void hash_tests() {
     // Monomials
-    Monomial a; 
-    a[0] = 2; a[1] = 4;
+    Monomial a{0, 4};
     const Monomial b{0, 0, 3, 5, 1, 2};
     boost::hash<Monomial> mono_hash;
     assert(mono_hash(b) == mono_hash(b));
     assert(mono_hash(a) != mono_hash(b));
     Monomial a_copy = a;
-    a_copy[100] = 0;
+    a_copy.set_var_degree(100, 0);
     assert(mono_hash(a) == mono_hash(a_copy));
     cerr << "Monomial hash OK!\n";
 

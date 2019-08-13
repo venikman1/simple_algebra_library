@@ -39,7 +39,6 @@ namespace SALIB {
                     res += Polynomial<CoefficientType, Order>(it1.second * it2.second, it1.first * it2.first);
                 }
             }
-            res.clean_empty_monomials();
             return res;
         }
         Polynomial& operator*=(const Polynomial& other);
@@ -70,7 +69,8 @@ namespace SALIB {
         const_reverse_iterator rend() const;
     
     private:
-        void clean_empty_monomials();
+        void clean_empty_monomials(); // Bad thing
+        void add_and_check(const Monomial&, const CoefficientType&);
 
         static const CoefficientType null_coef;
         static const Monomial empty_monomial;
@@ -163,45 +163,34 @@ namespace SALIB {
     }
 
     template <typename CoefficientType, typename Order>
+    void Polynomial<CoefficientType, Order>::add_and_check(const Monomial& mono, const CoefficientType& coeff) {
+        CoefficientType res = monomials[mono] += coeff;
+        if (res == null_coef)
+            monomials.erase(mono);
+    }
+
+    template <typename CoefficientType, typename Order>
     Polynomial<CoefficientType, Order>& Polynomial<CoefficientType, Order>::operator+=(const Polynomial& other) {
         for (const auto& it : other.monomials) {
-            monomials[it.first] += it.second;
+            add_and_check(it.first, it.second);
         }
-        clean_empty_monomials();
         return *this;
     }
 
     template <typename CoefficientType, typename Order>
     Polynomial<CoefficientType, Order>& Polynomial<CoefficientType, Order>::operator-=(const Polynomial& other) {
         for (const auto& it : other.monomials) {
-            monomials[it.first] -= it.second;
+            add_and_check(it.first, -it.second);
         }
-        clean_empty_monomials();
         return *this;
     }
 
-    template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order> operator*(const Polynomial<CoefficientType, Order>& a, const Polynomial<CoefficientType, Order>& b) {
-
-    }
 
     template <typename CoefficientType, typename Order>
     Polynomial<CoefficientType, Order>& Polynomial<CoefficientType, Order>::operator*=(const Polynomial& other) {
         Polynomial res = *this * other;
         *this = res;
         return *this;
-    }
-
-    template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order> operator+(const Polynomial<CoefficientType, Order>& a, const Polynomial<CoefficientType, Order>& b)  {
-
-    }
-
-    template <typename CoefficientType, typename Order>
-    Polynomial<CoefficientType, Order> operator-(const Polynomial<CoefficientType, Order>& a, const Polynomial<CoefficientType, Order>& b)  {
-        Polynomial<CoefficientType, Order> res(a);
-        res -= b;
-        return res;
     }
 
     template <typename CoefficientType, typename Order>

@@ -13,6 +13,7 @@
 #include "speed_tests.h"
 #include "stopwatch.h"
 #include "orders.h"
+#include "field.h"
 
 #include <random>
 
@@ -22,8 +23,10 @@ using namespace SALIB;
 std::random_device rd;
 std::mt19937 mt(rd());
 
+
 //using Rat = boost::rational<long long>;
-using Rat = boost::multiprecision::mpq_rational;
+//using Rat = boost::multiprecision::mpq_rational;
+using Rat = Field;
 using Poly = Polynomial<Rat>;
 using PolySet = PolynomialSet<Rat>;
 using PolyVec = vector<Poly>;
@@ -67,8 +70,9 @@ Poly get_symmetric_k(int n, int k) {
 void calc_cyclic_n(int n) {
 //    using PolyAlgTemp = PolyAlg<Rat>;
 
-    using DegRevLex = CustomOrder<MonoGradientSemiOrder, RevOrder<MonoLexOrder>>; // Change order here
+//    using DegRevLex = CustomOrder<MonoGradientSemiOrder, RevOrder<MonoLexOrder>>; // Change order here
 //    using DegRevLex = MonoLexOrder;
+    using DegRevLex = CustomOrder<MonoGradientSemiOrder, MonoLexOrder>;
     using PolyAlgTemp = PolyAlg<Rat, DegRevLex>;
     using DegRevLexPolySet = PolynomialSet<Rat, DegRevLex>;
 
@@ -76,7 +80,7 @@ void calc_cyclic_n(int n) {
     for (int idx = 1; idx < n; ++idx) {
         ideal.add(get_symmetric_k(n, idx));
     }
-    ideal.add(get_symmetric_k(n, n) - Poly(Rat(n % 2 == 0 ? -1 : 1)));
+    ideal.add(get_symmetric_k(n, n) - Poly(Rat((n % 2 == 0) ? -1 : 1)));
 
     PolyAlgTemp algo;
     DegRevLexPolySet basis = algo.make_groebner_basis(ideal);
