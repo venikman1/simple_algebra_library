@@ -36,9 +36,6 @@ namespace SALIB {
         bool operator()(const Monomial& a, const Monomial& b) const;
 
         static int cmp(const Monomial& a, const Monomial& b);
-
-    private:
-        using Derived = CustomOrder<Orders ...>;
     };
 
     template <typename FirstOrder>
@@ -68,7 +65,7 @@ namespace SALIB {
     int CustomOrder<FirstOrder, Orders ...>::cmp(const Monomial& a, const Monomial& b) {
         int res = FirstOrder::cmp(a, b);
         if (res == 0)
-            return Derived::cmp(a, b);
+            return CustomOrder<Orders ...>::cmp(a, b);
         return res;
     }
 

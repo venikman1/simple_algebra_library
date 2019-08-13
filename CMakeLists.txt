@@ -10,4 +10,7 @@ add_executable(salib
         src/monomial.cpp
         src/orders.cpp
         src/speed_tests.cpp
-        src/tests.cpp)
+        src/tests.cpp headers/stopwatch.h)
+
+target_link_libraries(salib gmp)
+target_link_libraries(salib gmpxx)

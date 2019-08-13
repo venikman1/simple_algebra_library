@@ -6,45 +6,47 @@
 namespace SALIB {
     template <typename CoefficientType, typename Order>
     std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly);
+    inline std::ostream& operator<<(std::ostream& out, const Monomial& mono);
+    inline void print_variable(std::ostream& out, Monomial::VariableIndexType var, Monomial::VariableDegreeType deg);
 
-
-
+    const std::string ALPHABET = "abcdefghijklmnopqrstuvwxyz";
 /*
 =================================IMPLEMENTATION================================= 
 */
 
-//    template <typename CoefficientType>
-//    void print_monomial(std::ostream& out, const Monomial& mono, const CoefficientType* coeff) {
-//        out <<
-//    }
+    void print_variable(std::ostream& out, Monomial::VariableIndexType var, Monomial::VariableDegreeType deg) {
+        if (var < ALPHABET.size())
+            out << ALPHABET[var];
+        else
+            out << "x_" << var;
+        out << "^" << deg;
+    }
+
+    std::ostream& operator<<(std::ostream& out, const Monomial& mono) {
+        bool first_var = true;
+        for (auto it = mono.begin(); it != mono.end(); ++it) {
+            int idx = it - mono.begin();
+            if (*it) {
+                if (!first_var) {
+                    out << " * ";
+                } else {
+                    first_var = false;
+                }
+                print_variable(out, idx, *it);
+            }
+        }
+        return out;
+    }
 
     template <typename CoefficientType, typename Order>
     std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly) {
         if (poly.is_zero()) {
-            out << "0";
-            return out;
+            return out << "0";
         }
-        bool first_time = true;
-        for (auto it = poly.rbegin(); it != poly.rend(); ++it) {     
-            if (it->second != CoefficientType(0)) {
-                if (first_time)
-                    first_time = false;      
-                else
-                    out << " + ";
-                out << it->second;
-                int i = 0;
-                for (const auto& var : it->first) {
-                    if (var) {
-                        out << " * ";
-                        if (i < 3)
-                            out << (char)('x' + i);
-                        else
-                            out << "x_" << i;
-                        out << "^" << var;
-                    }
-                    ++i;
-                }
-            }
+        for (auto it = poly.rbegin(); it != poly.rend(); ++it) {
+            if (it != poly.rbegin())
+                out << " + ";
+            out << it->second << (it->first.is_zero() ? "" : " * ") << it->first;
         }
         return out;
     }

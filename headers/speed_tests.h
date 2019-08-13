@@ -1,4 +1,4 @@
 #pragma once
 
 
-void use_all_pc_power();
+void calc_cyclic_n(int n);
