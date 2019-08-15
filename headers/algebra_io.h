@@ -5,7 +5,7 @@
 
 namespace SALIB {
     template <typename CoefficientType, typename Order>
-    std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly);
+    inline std::ostream& operator<<(std::ostream& out, const Polynomial<CoefficientType, Order>& poly);
     inline std::ostream& operator<<(std::ostream& out, const Monomial& mono);
     inline void print_variable(std::ostream& out, Monomial::VariableIndexType var, Monomial::VariableDegreeType deg);
 

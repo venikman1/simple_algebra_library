@@ -2,6 +2,7 @@
 #include <cassert>
 #include <string>
 #include <boost/rational.hpp>
+#include <thread>
 
 #include "polynomial.h"
 #include "polynomial_set.h"
@@ -36,7 +37,7 @@ struct Kek3 {
         cerr << "!\n"; return 0;
     }
 };
-int main() {
+void see_what_i_can() {
     test_all();
 
     cerr << "All tests succesful!\n";
@@ -85,12 +86,12 @@ int main() {
     PolySet answer;
     cout << "Ideal:\n";
     for (const auto& poly : ideal) {
-     cout << ">   " << poly << "\n";
+        cout << ">   " << poly << "\n";
     }
     cout << "\n";
     cout << "Basis:\n";
     for (const auto& poly : basis) {
-     cout << ">   " << poly << "\n";
+        cout << ">   " << poly << "\n";
     }
     cout << "\n";
     Poly f = - Rat(2) * x * y;
@@ -98,40 +99,81 @@ int main() {
     cout << "This is reduction by ideal: " << PolyAlg<Rat, GrLex>::reduce_by(f, ideal) << "\n";
     cout << "This is reduction by basis: " << PolyAlg<Rat, GrLex>::reduce_by(f, basis) << "\n";
     cout << "\nIs f in ideal? Answer: " <<
-     (PolyAlg<Rat, GrLex>::is_polynomial_in_ideal(f, ideal)?"YES":"NO") <<"\n";
+         (PolyAlg<Rat, GrLex>::is_polynomial_in_ideal(f, ideal)?"YES":"NO") <<"\n";
 
     PolySet ideal1; ideal1.add(x * x - Rat(2) * x * z + z * z);
     f = x - z;
     Poly g = x;
     cout << "\nIdeal1 in which we want to find radical:\n";
     for (const auto& poly : ideal1) {
-     cout << ">   " << poly << "\n";
+        cout << ">   " << poly << "\n";
     }
     cout << "f = " << f << "\n";
     cout << "g = " << g << "\n";
     cout << "\nIs f in radical? Answer: " <<
-     (PolyAlg<Rat, GrLex>::is_polynomial_in_radical(f, ideal1, 3)?"YES":"NO") <<"\n";
+         (PolyAlg<Rat, GrLex>::is_polynomial_in_radical(f, ideal1, 3)?"YES":"NO") <<"\n";
     cout << "\nIs g in radical? Answer: " <<
-     (PolyAlg<Rat, GrLex>::is_polynomial_in_radical(g, ideal1, 3)?"YES":"NO") <<"\n";
+         (PolyAlg<Rat, GrLex>::is_polynomial_in_radical(g, ideal1, 3)?"YES":"NO") <<"\n";
 
     PolySet ideal2; ideal2.add(y);
     cout << "\nIdeal2:\n";
     for (const auto& poly : ideal2) {
-     cout << ">   " << poly << "\n";
+        cout << ">   " << poly << "\n";
     }
     cout << "\n";
     PolySet ideal_res = PolyAlg<Rat, GrLex>::intersect_ideals(ideal1, ideal2, 3);
     cout << "\nIdeal1 intersect Ideal2:\n";
     for (const auto& poly : ideal_res) {
-     cout << ">   " << poly << "\n";
+        cout << ">   " << poly << "\n";
     }
     cout << "\n";
+}
 
+int main() {
+    auto lex_test = [](){for (int n = 1; n <= 20; ++n) {
 
-    for (int n = 1; n <= 20; ++n) {
-        StopWatch watch;
-        calc_cyclic_n(n);
-        cout << "Time spent for run " << n << ": " << watch.get_duration() << " seconds\n";
-    }
+            StopWatch watch;
+            using CoefType = Field;
+            using Order = MonoLexOrder;
+            auto basis = SpeedTest::calc_cyclic_n_basis<CoefType, Order>(n);
+//            cout << "Groebner basis:\n";
+//            for (const auto &poly : basis) {
+//                cout << " > " << poly << "\n";
+//            }
+            cout << "Time spent for run with F_2 and Lex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
+        }};
+    auto deglex_test = [](){
+        for (int n = 1; n <= 20; ++n) {
+            StopWatch watch;
+            using CoefType = Field;
+            using Order = CustomOrder<MonoGradientSemiOrder, MonoLexOrder>;
+            auto basis = SpeedTest::calc_cyclic_n_basis<CoefType, Order>(n);
+//            cout << "Groebner basis:\n";
+//            for (const auto &poly : basis) {
+//                cout << " > " << poly << "\n";
+//            }
+            cout << "Time spent for run with F_2 and DegLex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
+        }};
+
+    auto degrevlex_test = [](){
+        for (int n = 1; n <= 20; ++n) {
+            StopWatch watch;
+            using CoefType = Field;
+            using Order = CustomOrder<MonoGradientSemiOrder, RevOrder<MonoLexOrder>>;
+            auto basis = SpeedTest::calc_cyclic_n_basis<CoefType, Order>(n);
+//            cout << "Groebner basis:\n";
+//            for (const auto &poly : basis) {
+//                cout << " > " << poly << "\n";
+//            }
+            cout << "Time spent for run with F_2 and DegRevLex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
+        }
+    };
+
+    std::thread t1(lex_test);
+    std::thread t2(deglex_test);
+    std::thread t3(degrevlex_test);
+    t1.join();
+    t2.join();
+    t3.join();
     return 0;
 }

@@ -7,10 +7,9 @@ include_directories(headers)
 
 add_executable(salib
         src/main.cpp
-        src/monomial.cpp
-        src/orders.cpp
         src/speed_tests.cpp
-        src/tests.cpp headers/stopwatch.h headers/field.h)
+        src/tests.cpp)
 
 target_link_libraries(salib gmp)
 target_link_libraries(salib gmpxx)
+target_link_libraries(salib pthread)
