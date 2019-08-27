@@ -61,7 +61,14 @@ namespace SALIB {
         inline static bool reduce_by_one(
                 PolynomialType& divider,
                 const PolynomialType& divisor,
-                PolynomialType* incomplete_quotient);
+                PolynomialType* incomplete_quotient
+                );
+
+        inline static bool check_optimization_criterion(
+                const std::vector<PolynomialType>& ideal,
+                const Monomial& current_pair_lcm_lt,
+                int polys_processed
+                );
     };
 
     class PairMaker {
@@ -171,7 +178,7 @@ namespace SALIB {
             const std::vector<PolynomialType>& divisors,
             std::vector<PolynomialType>* incomplete_quotients) {
         bool is_reduced = false;
-        for (size_t i = 0; i < divisors.size() && not divider.is_zero(); ++i) {
+        for (size_t i = 0; i < divisors.size() && !divider.is_zero(); ++i) {
             is_reduced |= reduce_by_one(divider, divisors[i], (incomplete_quotients) ? &(*incomplete_quotients)[i] : nullptr);
         }
         return is_reduced;
@@ -228,6 +235,19 @@ namespace SALIB {
     }
 
     template <typename CoefficientType, typename Order>
+    bool PolyAlg<CoefficientType, Order>::check_optimization_criterion(
+            const std::vector<PolynomialType>& ideal,
+            const Monomial& current_pair_lcm_lt,
+            int polys_processed
+    ) {
+        for (size_t l = 0; l < polys_processed; ++l) {
+            if (current_pair_lcm_lt.is_dividable_by(ideal[l].get_largest_monomial()))
+                return true;
+        }
+        return false;
+    }
+
+    template <typename CoefficientType, typename Order>
     void
     PolyAlg<CoefficientType, Order>::make_groebner_basis(
         std::vector<PolynomialType>& ideal
@@ -239,23 +259,15 @@ namespace SALIB {
         while (!pairs.empty()) {
             size_t i = pairs.front().first;
             size_t j = pairs.front().second;
-//            if (i + 1 == j)
-//                std::cerr << j << " processed, ideal size is " << ideal.size() << "\n";
             pairs.pop();
             Monomial i_lt = ideal[i].get_largest_monomial();
             Monomial j_lt = ideal[j].get_largest_monomial();
             Monomial lcm_i_j = Monomial::lcm(i_lt, j_lt);
 
-            bool criterion = false;
-            for (size_t l = 0; l < i; ++l) {
-                if (lcm_i_j.is_dividable_by(ideal[l].get_largest_monomial()))
-                    criterion = true;
-            }
-            if (lcm_i_j != i_lt * j_lt && !criterion) {
+            if (lcm_i_j != i_lt * j_lt && !check_optimization_criterion(ideal, lcm_i_j, i)) {
                 PolynomialType s = PolynomialType::s_polynomial(ideal[i], ideal[j]);
                 s = reduce_by(s, ideal);
                 if (!s.is_zero()) {
-//                    std::cerr << "Ideal size is " << ideal.size() << "\n";
                     ideal.push_back(s);
                     for (size_t t = 0; t < ideal.size() - 1; ++t) {
                         pairs.push(std::make_pair(t, ideal.size() - 1));

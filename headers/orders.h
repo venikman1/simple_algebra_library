@@ -5,11 +5,7 @@
 
 
 namespace SALIB {
-    class Monomial;   // Me: C++, this class exists, trust me
-                      // C++: I believe you, but you can't use methods
-                      // Me: WHY? WHY? Can u just add normal cyclic import pls
-                      // C++: Haha, no
-                      // Me: ...
+    class Monomial;
 
     class MonoLexOrder {
     public:

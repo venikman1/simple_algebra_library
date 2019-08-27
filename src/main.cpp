@@ -130,42 +130,45 @@ void see_what_i_can() {
 }
 
 int main() {
-    auto lex_test = [](){for (int n = 1; n <= 20; ++n) {
-
+    auto lex_test = [](){
+        for (int n = 1; n <= 10; ++n) {
             StopWatch watch;
-            using CoefType = Field;
+            // using CoefType = Field;
+            using CoefType = boost::multiprecision::mpq_rational;
             using Order = MonoLexOrder;
             auto basis = SpeedTest::calc_cyclic_n_basis<CoefType, Order>(n);
 //            cout << "Groebner basis:\n";
 //            for (const auto &poly : basis) {
 //                cout << " > " << poly << "\n";
 //            }
-            cout << "Time spent for run with F_2 and Lex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
+            cout << "Time spent for run with mpq_rational and Lex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
         }};
     auto deglex_test = [](){
-        for (int n = 1; n <= 20; ++n) {
+        for (int n = 1; n <= 10; ++n) {
             StopWatch watch;
-            using CoefType = Field;
+            // using CoefType = Field;
+            using CoefType = boost::multiprecision::mpq_rational;
             using Order = CustomOrder<MonoGradientSemiOrder, MonoLexOrder>;
             auto basis = SpeedTest::calc_cyclic_n_basis<CoefType, Order>(n);
-//            cout << "Groebner basis:\n";
-//            for (const auto &poly : basis) {
-//                cout << " > " << poly << "\n";
-//            }
-            cout << "Time spent for run with F_2 and DegLex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
+            cout << "Groebner basis:\n";
+            for (const auto &poly : basis) {
+                cout << " > " << poly << "\n";
+            }
+            cout << "Time spent for run with mpq_rational and DegLex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
         }};
 
     auto degrevlex_test = [](){
-        for (int n = 1; n <= 20; ++n) {
+        for (int n = 1; n <= 10; ++n) {
             StopWatch watch;
-            using CoefType = Field;
+            // using CoefType = Field;
+            using CoefType = boost::multiprecision::mpq_rational;
             using Order = CustomOrder<MonoGradientSemiOrder, RevOrder<MonoLexOrder>>;
             auto basis = SpeedTest::calc_cyclic_n_basis<CoefType, Order>(n);
 //            cout << "Groebner basis:\n";
 //            for (const auto &poly : basis) {
 //                cout << " > " << poly << "\n";
 //            }
-            cout << "Time spent for run with F_2 and DegRevLex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
+            cout << "Time spent for run with mpq_rational and DegRevLex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
         }
     };
 

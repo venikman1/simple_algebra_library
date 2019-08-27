@@ -31,6 +31,9 @@ namespace SALIB {
 
         PolynomialSet() = default;
 
+        template <typename PrevCoefficientType, typename PrevOrder>
+        PolynomialSet(const PolynomialSet<PrevCoefficientType, PrevOrder>& prev_set);
+
         void add(const PolynomialType& poly);
         void remove(const PolynomialType& poly);
 
@@ -56,6 +59,13 @@ namespace SALIB {
 /*
 =================================IMPLEMENTATION================================= 
 */
+
+    template <typename CoefficientType, typename Order>
+    template <typename PrevCoefficientType, typename PrevOrder>
+    PolynomialSet<CoefficientType, Order>::PolynomialSet(const PolynomialSet<PrevCoefficientType, PrevOrder>& prev_set) {
+        for (const auto& poly : prev_set)
+            this->add(PolynomialType(poly));
+    }
     
     template <typename CoefficientType, typename Order>
     void PolynomialSet<CoefficientType, Order>::add(const PolynomialType& poly) {

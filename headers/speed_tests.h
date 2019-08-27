@@ -73,13 +73,15 @@ namespace SpeedTest {
         for (int idx = 1; idx < n; ++idx) {
             ideal.add(get_symmetric_k<CoefficientType, Order>(n, idx));
         }
+
         ideal.add(get_symmetric_k<CoefficientType, Order>(n, n) - Poly(CoefficientType((n % 2 == 0) ? -1 : 1)));
 
         CurrentPolyAlg algo;
+        ideal = algo.auto_reduce(ideal);
         PolySet basis = algo.make_groebner_basis(ideal);
         basis = algo.auto_reduce(basis);
         if (basis.size() != n) {
-            cout << "BAD BASIS SIZE\n";
+            cerr << "BAD BASIS SIZE\n";
             exit(0);
         }
         return basis;
