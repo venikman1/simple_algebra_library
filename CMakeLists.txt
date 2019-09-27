@@ -7,7 +7,6 @@ include_directories(headers)
 
 add_executable(salib
         src/main.cpp
-        src/speed_tests.cpp
         src/tests.cpp)
 
 target_link_libraries(salib gmp)

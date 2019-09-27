@@ -129,7 +129,7 @@ def render_tests(tests: List[Test]):
     return "\n".join([close_line] + rendered_lines + [close_line])
 
 
-def main(exec_filename, test_filename):
+def main(exec_filename, test_filename, timeout):
     with open(test_filename, "r") as f:
         text = f.read()
     all_tests = []
@@ -148,7 +148,7 @@ def main(exec_filename, test_filename):
         logger.info("Input for program:\n%s", input_for_program)
         current_test = Test(name, descr, dict())
         try:
-            outs, errs = process.communicate(input_for_program.encode(), timeout=10)
+            outs, errs = process.communicate(input_for_program.encode(), timeout=timeout)
             outs = outs.decode().strip()
             for match in TEST_RESULT_RE.finditer(outs):
                 time_name = match.group("test_name")
@@ -169,5 +169,6 @@ if __name__ == "__main__":
 
     parser.add_argument("exec_file", help="Tested program")
     parser.add_argument("--test_file", help="File with tests", required=True)
+    parser.add_argument("--timeout", help="Timeout for one test", default=10.0, type=float)
     args = parser.parse_args()
-    main(args.exec_file, args.test_file)
+    main(args.exec_file, args.test_file, args.timeout)
