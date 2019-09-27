@@ -145,7 +145,7 @@ namespace SALIB {
     PairMaker::iterator PairMaker::end() const {
         if (n < 2)
             return PairMaker::iterator({-1, -1});
-        return PairMaker::iterator({n - 2, n});
+        return PairMaker::iterator({0, n});
     }
 
     PairMaker::PairMaker(size_t n) : n(n) {}
@@ -225,11 +225,21 @@ namespace SALIB {
     typename PolyAlg<CoefficientType, Order>::PolySet PolyAlg<CoefficientType, Order>::auto_reduce(
             const PolynomialSet<CoefficientType, Order>& ideal) {
         PolySet res(ideal);
-        for (const auto& poly : ideal) {
-//            std::cerr << "Poly from ideal " << poly << "\n";
-            res.remove(poly);
-            PolynomialType reduced = reduce_by(poly, res);
-            res.add(reduced);
+        PolySet temp;
+        bool reducing = true;
+        while (reducing) {
+            reducing = false;
+            temp = res;
+            for (const auto& poly : temp) {
+                
+    //            std::cerr << "Poly from ideal " << poly << "\n";
+                res.remove(poly);
+                PolynomialType reduced = reduce_by(poly, res);
+                if (reduced.is_zero() || poly.get_largest_monomial() != reduced.get_largest_monomial()) {
+                    reducing = true;
+                }
+                res.add(reduced);
+            }
         }
         return res;
     }

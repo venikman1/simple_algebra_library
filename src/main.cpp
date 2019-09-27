@@ -3,6 +3,7 @@
 #include <string>
 #include <boost/rational.hpp>
 #include <thread>
+#include <future>
 
 #include "polynomial.h"
 #include "polynomial_set.h"
@@ -130,53 +131,90 @@ void see_what_i_can() {
 }
 
 int main() {
-    auto lex_test = [](){
-        for (int n = 1; n <= 10; ++n) {
-            StopWatch watch;
-            // using CoefType = Field;
-            using CoefType = boost::multiprecision::mpq_rational;
-            using Order = MonoLexOrder;
-            auto basis = SpeedTest::calc_cyclic_n_basis<CoefType, Order>(n);
-//            cout << "Groebner basis:\n";
-//            for (const auto &poly : basis) {
-//                cout << " > " << poly << "\n";
-//            }
-            cout << "Time spent for run with mpq_rational and Lex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
-        }};
-    auto deglex_test = [](){
-        for (int n = 1; n <= 10; ++n) {
-            StopWatch watch;
-            // using CoefType = Field;
-            using CoefType = boost::multiprecision::mpq_rational;
-            using Order = CustomOrder<MonoGradientSemiOrder, MonoLexOrder>;
-            auto basis = SpeedTest::calc_cyclic_n_basis<CoefType, Order>(n);
-            cout << "Groebner basis:\n";
-            for (const auto &poly : basis) {
-                cout << " > " << poly << "\n";
-            }
-            cout << "Time spent for run with mpq_rational and DegLex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
-        }};
-
-    auto degrevlex_test = [](){
-        for (int n = 1; n <= 10; ++n) {
-            StopWatch watch;
-            // using CoefType = Field;
-            using CoefType = boost::multiprecision::mpq_rational;
-            using Order = CustomOrder<MonoGradientSemiOrder, RevOrder<MonoLexOrder>>;
-            auto basis = SpeedTest::calc_cyclic_n_basis<CoefType, Order>(n);
-//            cout << "Groebner basis:\n";
-//            for (const auto &poly : basis) {
-//                cout << " > " << poly << "\n";
-//            }
-            cout << "Time spent for run with mpq_rational and DegRevLex order is " << n << ": " << watch.get_duration() << " seconds\n\n";
-        }
+    using CoefType = Field<>; // boost::multiprecision::mpq_rational;
+    auto lex_test = [](const PolynomialSet<CoefType>& idl) -> double {
+        StopWatch watch;
+        // using CoefType = Field;
+        
+        using Order = MonoLexOrder;
+        PolynomialSet<CoefType, Order> ideal(idl);
+        auto basis = SpeedTest::calc_basis_and_reduce(ideal);
+        cerr << "Lex test ended\n";
+        return watch.get_duration();
+    };
+    auto deglex_test = [](const PolynomialSet<CoefType>& idl) -> double {
+        StopWatch watch;
+        using Order = CustomOrder<MonoGradientSemiOrder, MonoLexOrder>;
+        PolynomialSet<CoefType, Order> ideal(idl);
+        auto basis = SpeedTest::calc_basis_and_reduce(ideal);
+        cerr << "DegLex test ended\n";
+        return watch.get_duration();
     };
 
-    std::thread t1(lex_test);
-    std::thread t2(deglex_test);
-    std::thread t3(degrevlex_test);
-    t1.join();
-    t2.join();
-    t3.join();
+    auto degrevlex_test = [](const PolynomialSet<CoefType>& idl) -> double {
+        StopWatch watch;
+        using Order = CustomOrder<MonoGradientSemiOrder, RevOrder<MonoLexOrder>>;
+        PolynomialSet<CoefType, Order> ideal(idl);
+        // cerr << "IDEAL DEGREVLEX:\n";
+        // for (const auto& poly : ideal) {
+        //     cerr << "> " << poly << "\n";
+        //     for (const auto& mono : poly) {
+        //         cerr << "mono > " << mono.first << "\n";
+        //         cerr << "is_zero > " << mono.first.is_zero() << "\n";
+        //         cerr << "coeff > " << mono.second << "\n";
+        //     }
+        // }
+        auto basis = SpeedTest::calc_basis_and_reduce(ideal);
+        cerr << "DegRevLex test ended\n";
+        // for (const auto& poly : basis) {
+        //     cerr << "> " << poly << "\n";
+        // }
+        return watch.get_duration();
+    };
+    
+    
+    using Poly = Polynomial<CoefType, DefaultOrder>;
+    using PolySet = PolynomialSet<CoefType, DefaultOrder>;
+
+    PolySet input_ideal = SpeedTest::read_polyset<CoefType, DefaultOrder>(cin);
+    
+    cerr << "Input ideal\n";
+    for (const auto& poly : input_ideal) {
+        cerr << "> " << poly << "\n";
+    }
+    // PolySet ideal;
+    // int n = 7;
+    // for (int idx = 1; idx < n; ++idx) {
+    //     ideal.add(SpeedTest::get_symmetric_k<CoefType, DefaultOrder>(n, idx));
+    // }
+
+    // ideal.add(SpeedTest::get_symmetric_k<CoefType, DefaultOrder>(n, n) - Poly(CoefType((n % 2 == 0) ? -1 : 1)));    
+    
+    
+    // cerr << "generated ideal:\n";
+    // for (const auto& poly : ideal) {
+    //     cerr << "> " << poly << "\n";
+    // }
+
+    // for (const auto& poly : ideal) {
+    //     if (!input_ideal.contains(poly))
+    //         cerr << "Shit happens!\n";
+    // }
+    // for (const auto& poly : input_ideal) {
+    //     if (!ideal.contains(poly))
+    //         cerr << "Shit happens!\n";
+    // }
+    // Poly x = Poly(Monomial{1});
+    // Poly y = Poly(Monomial{0, 1});
+    // Poly z = Poly(Monomial{0, 0, 1});
+    // input_ideal.add(x * x + y);
+    // input_ideal.add(y);
+
+    std::future<double> lex_res = std::async(std::launch::async, lex_test, input_ideal);
+    std::future<double> deglex_res = std::async(std::launch::async, deglex_test, input_ideal);
+    std::future<double> degrevlex_res = std::async(std::launch::async, degrevlex_test, input_ideal);
+    cout << "Lex order:" << lex_res.get() << "\n";
+    cout << "DegLex order:" << deglex_res.get() << "\n";
+    cout << "DegRevLex order:" << degrevlex_res.get() << "\n";
     return 0;
 }

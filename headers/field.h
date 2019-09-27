@@ -3,8 +3,8 @@
 #include <boost/functional/hash.hpp>
 
 namespace SALIB {
-    const int N = 2;
 
+    template <int N = 2>
     struct Field {
         unsigned long long n;
         static const unsigned long long inv[N];
@@ -72,14 +72,16 @@ namespace SALIB {
 
         inline bool operator!=(const Field &other) const { return n != other.n; };
 
-        inline friend size_t hash_value(const SALIB::Field &f) {
+        inline friend size_t hash_value(const Field &f) {
             return f.n;
         }
     };
 
-    const unsigned long long Field::inv[N] = {0, 1};// , 3, 2, 4};
+    template <int N>
+    const unsigned long long Field<N>::inv[N] = {0, 1};// , 3, 2, 4};
 
-    inline std::ostream &operator<<(std::ostream &out, const Field &f) { return out << f.n; }
+    template <int N>
+    inline std::ostream &operator<<(std::ostream &out, const Field<N> &f) { return out << f.n; }
 
 
 

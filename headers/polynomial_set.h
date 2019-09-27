@@ -35,6 +35,7 @@ namespace SALIB {
         PolynomialSet(const PolynomialSet<PrevCoefficientType, PrevOrder>& prev_set);
 
         void add(const PolynomialType& poly);
+        bool contains(const PolynomialType& poly) const;
         void remove(const PolynomialType& poly);
 
         PolynomialSet& operator+=(const PolynomialSet& other);
@@ -74,6 +75,15 @@ namespace SALIB {
         PolynomialType cpy(poly);
         cpy *= PolynomialType(CoefficientType(1) / poly[poly.get_largest_monomial()]);
         polynomials.insert(cpy);
+    }
+
+    template <typename CoefficientType, typename Order>
+    bool PolynomialSet<CoefficientType, Order>::contains(const PolynomialType& poly) const {
+        if (poly.is_zero())
+            return true;
+        PolynomialType cpy(poly);
+        cpy *= PolynomialType(CoefficientType(1) / poly[poly.get_largest_monomial()]);
+        return polynomials.find(cpy) != polynomials.end();
     }
 
     template <typename CoefficientType, typename Order>

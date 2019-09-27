@@ -52,7 +52,7 @@ namespace SALIB {
         inline VariableDegreeType& operator[](VariableIndexType var_index);
 
         VariablesContainer variables;
-        VariableDegreeType degree;
+        VariableDegreeType degree = 0;
     };
 
     Monomial::VariableDegreeType Monomial::get_degree() const {
