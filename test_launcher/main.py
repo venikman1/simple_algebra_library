@@ -140,20 +140,20 @@ def run_test(name, description, variables, ideal, exec_filename, timeout):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    logger.info("Input for program:\n%s", input_for_program)
+    logger.debug("Input for program:\n%s", input_for_program)
     current_test = Test(name, descr, dict())
     try:
         outs, errs = process.communicate(input_for_program.encode(), timeout=timeout)
-        outs = outs.decode().strip()
-        for match in TEST_RESULT_RE.finditer(outs):
-            time_name = match.group("test_name")
-            time = float(match.group("test_time").strip())
-            current_test.results[time_name] = "{:.8f}".format(time)
         logger.info("Test %s successful", name)
     except subprocess.TimeoutExpired:
         process.kill()
         logger.info("Test %s timeout", name)
         outs, errs = process.communicate()
+    outs = outs.decode().strip()
+    for match in TEST_RESULT_RE.finditer(outs):
+        time_name = match.group("test_name")
+        time = float(match.group("test_time").strip())
+        current_test.results[time_name] = "{:.8f}".format(time)
     logger.info("Stderr for test %s:\n%s", name, errs.decode())
     return current_test
 

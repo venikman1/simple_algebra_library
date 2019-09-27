@@ -4,6 +4,7 @@
 #include <boost/rational.hpp>
 #include <thread>
 #include <future>
+#include <mutex>
 
 #include "polynomial.h"
 #include "polynomial_set.h"
@@ -130,6 +131,9 @@ void see_what_i_can() {
     cout << "\n";
 }
 
+
+std::mutex cout_mutex;
+
 int main() {
     using CoefType = Field<>; // boost::multiprecision::mpq_rational;
     auto lex_test = [](const PolynomialSet<CoefType>& idl) -> double {
@@ -140,6 +144,9 @@ int main() {
         PolynomialSet<CoefType, Order> ideal(idl);
         auto basis = SpeedTest::calc_basis_and_reduce(ideal);
         cerr << "Lex test ended\n";
+        std::lock_guard<std::mutex> guard(cout_mutex);
+        cout << "Lex order:" << watch.get_duration() << "\n";
+        cout.flush();
         return watch.get_duration();
     };
     auto deglex_test = [](const PolynomialSet<CoefType>& idl) -> double {
@@ -148,6 +155,10 @@ int main() {
         PolynomialSet<CoefType, Order> ideal(idl);
         auto basis = SpeedTest::calc_basis_and_reduce(ideal);
         cerr << "DegLex test ended\n";
+        std::lock_guard<std::mutex> guard(cout_mutex);
+        cout << "DegLex order:" << watch.get_duration() << "\n";
+        cout.flush();
+        
         return watch.get_duration();
     };
 
@@ -166,6 +177,9 @@ int main() {
         // }
         auto basis = SpeedTest::calc_basis_and_reduce(ideal);
         cerr << "DegRevLex test ended\n";
+        std::lock_guard<std::mutex> guard(cout_mutex);
+        cout << "DegRevLex order:" << watch.get_duration() << "\n";
+        cout.flush();
         // for (const auto& poly : basis) {
         //     cerr << "> " << poly << "\n";
         // }
@@ -210,11 +224,18 @@ int main() {
     // input_ideal.add(x * x + y);
     // input_ideal.add(y);
 
-    std::future<double> lex_res = std::async(std::launch::async, lex_test, input_ideal);
-    std::future<double> deglex_res = std::async(std::launch::async, deglex_test, input_ideal);
-    std::future<double> degrevlex_res = std::async(std::launch::async, degrevlex_test, input_ideal);
-    cout << "Lex order:" << lex_res.get() << "\n";
-    cout << "DegLex order:" << deglex_res.get() << "\n";
-    cout << "DegRevLex order:" << degrevlex_res.get() << "\n";
+    // std::future<double> lex_res = std::async(std::launch::async, lex_test, input_ideal);
+    // std::future<double> deglex_res = std::async(std::launch::async, deglex_test, input_ideal);
+    // std::future<double> degrevlex_res = std::async(std::launch::async, degrevlex_test, input_ideal);
+    // lex_res.get();
+    // deglex_res.get();
+    // degrevlex_res.get();
+
+    std::thread lex_res(lex_test, input_ideal);
+    std::thread deglex_res(deglex_test, input_ideal);
+    std::thread degrevlex_res(degrevlex_test, input_ideal);
+    lex_res.join();
+    deglex_res.join();
+    degrevlex_res.join();
     return 0;
 }
